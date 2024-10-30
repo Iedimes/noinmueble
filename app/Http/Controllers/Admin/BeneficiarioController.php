@@ -79,7 +79,7 @@ class BeneficiarioController extends Controller
                  ];
 
                  $client = new Client();
-                 $res = $client->post('http://10.1.79.7:8080/mbohape-core/sii/security', [
+                 $res = $client->post('http://192.168.195.1:8080/mbohape-core/sii/security', [
                      'headers' => $headers,
                      'json' => $GetOrder,
                      'decode_content' => false
@@ -95,7 +95,7 @@ class BeneficiarioController extends Controller
                          'decode_content' => false
                      ];
 
-                     $cedulaResponse = $client->get('http://10.1.79.7:8080/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
+                     $cedulaResponse = $client->get('http://192.168.195.1:8080/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
                          'headers' => $headerscedula,
                      ]);
 
@@ -160,7 +160,7 @@ class BeneficiarioController extends Controller
                 ];
 
                 $client = new Client();
-                $res = $client->post('http://10.1.79.7:8080/mbohape-core/sii/security', [
+                $res = $client->post('http://192.168.195.1:8080/mbohape-core/sii/security', [
                     'headers' => $headers,
                     'json' => $GetOrder,
                     'decode_content' => false
@@ -176,7 +176,7 @@ class BeneficiarioController extends Controller
                         'decode_content' => false
                     ];
 
-                    $cedulaResponse = $client->get('http://10.1.79.7:8080/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
+                    $cedulaResponse = $client->get('http://192.168.195.1:8080/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
                         'headers' => $headerscedula,
                     ]);
 
@@ -229,7 +229,7 @@ class BeneficiarioController extends Controller
             ];
 
             $client = new Client();
-            $res = $client->post('http://10.1.79.7:8080/mbohape-core/sii/security', [
+            $res = $client->post('http://192.168.195.1:8080/mbohape-core/sii/security', [
                 'headers' => $headers,
                 'json' => $GetOrder,
                 'decode_content' => false
@@ -245,7 +245,7 @@ class BeneficiarioController extends Controller
                     'decode_content' => false
                 ];
 
-                $cedulaResponse = $client->get('http://10.1.79.7:8080/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
+                $cedulaResponse = $client->get('http://192.168.195.1:8080/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
                     'headers' => $headerscedula,
                 ]);
 
@@ -330,7 +330,7 @@ class BeneficiarioController extends Controller
             ];
 
             $client = new Client();
-            $res = $client->post('http://10.1.79.7:8080/mbohape-core/sii/security', [
+            $res = $client->post('http://192.168.195.1:8080/mbohape-core/sii/security', [
                 'headers' => $headers,
                 'json' => $GetOrder,
                 'decode_content' => false
@@ -346,7 +346,7 @@ class BeneficiarioController extends Controller
                     'decode_content' => false
                 ];
 
-                $cedulaResponse = $client->get('http://10.1.79.7:8080/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
+                $cedulaResponse = $client->get('http://192.168.195.1:8080/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
                     'headers' => $headerscedula,
                 ]);
 
