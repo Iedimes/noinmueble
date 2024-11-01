@@ -6,11 +6,9 @@ setlocale(LC_ALL, 'es_ES.UTF-8', 'es_ES', 'esp');
 function convertirNumeroALetras($numero)
 {
     $unidades = ['', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve', 'veinte', 'veintiuno', 'veintidós', 'veintitrés', 'veinticuatro', 'veinticinco', 'veintiséis', 'veintisiete', 'veintiocho', 'veintinueve', 'treinta', 'treinta y uno'];
-
     if ($numero <= 31) {
         return $unidades[$numero];
     }
-
     return '';
 }
 
@@ -26,34 +24,45 @@ function convertirAnioALetras($anio)
 
 // Obtener el día actual
 $diaActual = date('j');
-
 // Obtener el mes actual en letras
 $mesActual = strftime('%B');
-
 // Obtener el año actual en letras
 $anioActual = convertirAnioALetras(date('Y'));
 
 // Obtener la fecha en letras
 $fechaEnLetras = 'a los ' . convertirNumeroALetras($diaActual) . ' (' . $diaActual . ') días del mes de ' . $mesActual . ' del año ' . $anioActual;
-
 ?>
 
+<p style="text-align:right; font-size:17px; font-family:Times New Roman;"><b>NPB {{ $response['cedula'] }}</b></p>
+
+<p style="text-align:center; font-size:19px; font-family:Times New Roman;"><b>CONSTANCIA DE NO SER BENEFICIARIO</b></p>
+
+<p style="text-align:center; font-size:19px; font-family:Times New Roman;"><b>MINISTERIO DE URBANISMO, VIVIENDA Y HABITAT</b></p>
 <br>
-<p style="text-align:right;font-size:18px;"><b>NPB {{ $cedula }}</b></p>
-<p style="text-align:center;font-size:30px; font-family:Arial, Helvetica, sans-serif;">CONSTANCIA</p>
-<p style="text-align: justify;">Se hace constar que el/la <b>Sr./Sra. {{ $bamper->PerNomPri }} {{ $bamper->PerNomSeg }} {{ $bamper->PerApePri }} {{ $bamper->PerApeSeg }}
-</b>con <b>C.I. N°. {{ $cedula }} </b>, no registra beneficio a su nombre en los Programas respaldados documental y digitalmente de
- <b>FONAVIS, CREDITOS HIPOTECARIOS, VIVIENDAS ECONOMICAS, FOCEM, SEMBRANDO OPORTUNIDADES Y CHE TAPYI</b> de la institución, por tanto, se expide la presente constancia
- a pedido del/la interesado/a para lo que hubiere lugar, {{ $fechaEnLetras }}
- <br><br>
- <p style="text-align:center;font-size:15px;"><b>LIC. SARA IRENE RAFAR GAONA</b></p>
- <p style="text-align:center;font-size:12px;"><b>Dirección de Registro y Estadística de Información Social</b></p>
 
- <br><br>
+<p style="text-align:justify; font-size:15px; font-family:Times New Roman;">
+    Se hace constar que el/la <b>Sr./Sra. {{ $response['titular'] }}</b>
+    con <b>C.I. N°. {{ $response['cedula'] }} </b>, no registra beneficio en el marco de los diferentes Programas y Proyectos Habitacionales del
+    Ministerio de Urbanismo, Vivienda y Habitat - MUVH, respaldados documental y digitalmente.
+    La constancia se expide a pedido del/la interesado/a para los tramites administrativos solicitados en el Ministerio de Desarrollo Social, {{ $fechaEnLetras }}
+</p>
+<br><br><br>
+<center>
+    <div style="position: relative; display: inline-block;">
+        <img src="{{ storage_path('images/HECTOR.JPG') }}" class="imagencentro" width="100" height="100">
+        <p style="font-size:13px; font-family:Times New Roman; text-align: center;"><b>ARQ. HECTOR VILLAGRA SANCHEZ</b></p>
+        <p style="font-size:13px; font-family:Times New Roman; text-align: center;"><b>Dirección General Social</b></p>
+    </div>
 
- <p style="text-align:center;font-size:15px;"><b>ARQ. HECTOR VILLAGRA SANCHEZ</b></p>
- <p style="text-align:center;font-size:12px;"><b>Dirección General Social</b></p>
+    <div style="position: relative; display: inline-block; margin-left: 20px;">
+        <img src="{{ storage_path('images/SARA.JPG') }}" class="imagencentro" width="100" height="100">
+        <p style="font-size:13px; font-family:Times New Roman; text-align: center;"><b>LIC. SARA IRENE RAFAR GAONA</b></p>
+        <p style="font-size:13px; font-family:Times New Roman; text-align: center;"><b>Dirección de Registro y Estadística de Información Social</b></p>
+    </div>
+</center>
 
-<br><br>
+<br>
+
 <img src="data:image/png;base64, {{ base64_encode($valor) }}" style="left: 550px; width: 100px; height: 100px;" alt="">
-<br>
+<p style="font-size:11px; font-family:Times New Roman;"><b>Consulte este documento escaneando el QR</b></p>
+

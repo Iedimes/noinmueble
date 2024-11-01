@@ -372,7 +372,7 @@ class BeneficiarioController extends Controller
                     ];
 
                     $codigoQr = QrCode::size(150)->generate(env('APP_URL') . '/' . $PerCod);
-                    $pdf = PDF::loadView('admin.beneficiario.pdf.constancia1', [
+                    $pdf = PDF::loadView('admin.beneficiario.pdf.constancia', [
                         'response' => $response,
                         'valor' => $codigoQr,
                     ]);
