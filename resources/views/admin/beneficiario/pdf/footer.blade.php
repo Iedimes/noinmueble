@@ -4,8 +4,8 @@
 <table style="width:100%">
     <tr>
         <td style="text-align:justify;font-size:11px;font-weight:bold;; border: 1px solid black; padding:5px">OBSERVACION <br>
-            <strong>Las constacias son válidas por noventa días y de expedición gratiuta.</strong><br>
-            La búsqueda de la información solicitada y proporcionada se realizó en los registros cargardos y digitalizados obrantes de MUVH, no obstante,
+            <strong>La constacia es válida por noventa días y de expedición gratiuta.</strong><br>
+            La búsqueda de la información solicitada y proporcionada se realizó en los registros físicos y digitalizados obrantes en el MUVH, no obstante,
             podría estar sujeta a verificaciones posteriores sobre las constantes actualizaciones de la información.
             "Articulo 246.- Producción de documentos no auténticos. 1° El que produjera o usara un documento no auténtico
             con intención de inducir en las relaciones jurídicas al error sobre su autenticidad, será castigado con pena privativa de libertad

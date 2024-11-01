@@ -44,25 +44,15 @@ $fechaEnLetras = 'a los ' . convertirNumeroALetras($diaActual) . ' (' . $diaActu
     Se hace constar que el/la <b>Sr./Sra. {{ $response['titular'] }}</b>
     con <b>C.I. N°. {{ $response['cedula'] }} </b>, no registra beneficio en el marco de los diferentes Programas y Proyectos Habitacionales del
     Ministerio de Urbanismo, Vivienda y Habitat - MUVH, respaldados documental y digitalmente.
-    La constancia se expide a pedido del/la interesado/a para los tramites administrativos solicitados en el Ministerio de Desarrollo Social, {{ $fechaEnLetras }}
+    Se expide la presente constancia a pedido del/la interesado/a, {{ $fechaEnLetras }}
 </p>
 <br><br><br>
-<center>
-    <div style="position: relative; display: inline-block;">
-        <img src="{{ storage_path('images/HECTOR.JPG') }}" class="imagencentro" width="100" height="100">
-        <p style="font-size:13px; font-family:Times New Roman; text-align: center;"><b>ARQ. HECTOR VILLAGRA SANCHEZ</b></p>
-        <p style="font-size:13px; font-family:Times New Roman; text-align: center;"><b>Dirección General Social</b></p>
-    </div>
 
-    <div style="position: relative; display: inline-block; margin-left: 20px;">
-        <img src="{{ storage_path('images/SARA.JPG') }}" class="imagencentro" width="100" height="100">
-        <p style="font-size:13px; font-family:Times New Roman; text-align: center;"><b>LIC. SARA IRENE RAFAR GAONA</b></p>
-        <p style="font-size:13px; font-family:Times New Roman; text-align: center;"><b>Dirección de Registro y Estadística de Información Social</b></p>
-    </div>
-</center>
+<p style="font-size:13px; font-family:Times New Roman; text-align: center;"><b>Emitido por: La Dirección General Social, Dirección de Registro y Estadísticas de Información Social </b></p>
 
-<br>
+<br><br><br>
 
-<img src="data:image/png;base64, {{ base64_encode($valor) }}" style="left: 550px; width: 100px; height: 100px;" alt="">
-<p style="font-size:11px; font-family:Times New Roman;"><b>Consulte este documento escaneando el QR</b></p>
+<img src="data:image/png;base64, {{ base64_encode($valor) }}" style="left: 550px; width: 100px; height: 100px;" alt=""><br>
+<p style="font-size:11px; font-family:Times New Roman;"><b>Verifique a través del código QR la validez de este documento.</b></p><br>
+<p style="font-size:11px; font-family:Times New Roman;"><b>Registro de Sistema de Información del MUVH - Resolución Nro. xxx</b></p>
 
