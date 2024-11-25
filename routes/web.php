@@ -17,7 +17,7 @@ Route::get('/', function () {
     return view('brackets/admin-auth::admin.auth.login');
 });
 
-Route::get('/', 'App\Http\Controllers\Admin\HomeController@dashboard');
+// Route::get('/', 'App\Http\Controllers\Admin\HomeController@dashboard');
 
 Route::get('/verificacion/{cedula}', 'App\Http\Controllers\Admin\BeneficiarioController@verificacion');
 

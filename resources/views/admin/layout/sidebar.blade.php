@@ -3,7 +3,7 @@
         <ul class="nav">
             <li class="nav-title">{{ trans('brackets/admin-ui::admin.sidebar.content') }}</li>
             <li class="nav-item">
-                <a class="nav-link" href="{{ url('/') }}">
+                <a class="nav-link" href="{{ url('admin/beneficiarios') }}">
                     <i class="fa fa-fw fa-home"></i> {{ trans('CONSULTA ') }}
                 </a>
             </li>
