@@ -74,12 +74,12 @@ class BeneficiarioController extends Controller
                  ];
 
                  $GetOrder = [
-                     'username' => 'senavitatconsultas',
-                     'password' => 'S3n4vitat'
+                     'username' => 'muvhConsulta',
+                     'password' => '*Sipp*2025**'
                  ];
 
                  $client = new Client();
-                 $res = $client->post('http://192.168.195.1:8080/mbohape-core/sii/security', [
+                 $res = $client->post('https://sii.paraguay.gov.py/security', [
                      'headers' => $headers,
                      'json' => $GetOrder,
                      'decode_content' => false
@@ -95,7 +95,7 @@ class BeneficiarioController extends Controller
                          'decode_content' => false
                      ];
 
-                     $cedulaResponse = $client->get('http://192.168.195.1:8080/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
+                     $cedulaResponse = $client->get('https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
                          'headers' => $headerscedula,
                      ]);
 
@@ -155,12 +155,12 @@ class BeneficiarioController extends Controller
                 ];
 
                 $GetOrder = [
-                    'username' => 'senavitatconsultas',
-                    'password' => 'S3n4vitat'
+                    'username' => 'muvhConsulta',
+                    'password' => '*Sipp*2025**'
                 ];
 
                 $client = new Client();
-                $res = $client->post('http://192.168.195.1:8080/mbohape-core/sii/security', [
+                $res = $client->post('https://sii.paraguay.gov.py/security', [
                     'headers' => $headers,
                     'json' => $GetOrder,
                     'decode_content' => false
@@ -176,7 +176,7 @@ class BeneficiarioController extends Controller
                         'decode_content' => false
                     ];
 
-                    $cedulaResponse = $client->get('http://192.168.195.1:8080/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
+                    $cedulaResponse = $client->get('https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
                         'headers' => $headerscedula,
                     ]);
 
@@ -224,12 +224,12 @@ class BeneficiarioController extends Controller
             ];
 
             $GetOrder = [
-                'username' => 'senavitatconsultas',
-                'password' => 'S3n4vitat'
+                'username' => 'muvhConsulta',
+                'password' => '*Sipp*2025**'
             ];
 
             $client = new Client();
-            $res = $client->post('http://192.168.195.1:8080/mbohape-core/sii/security', [
+            $res = $client->post('https://sii.paraguay.gov.py/security', [
                 'headers' => $headers,
                 'json' => $GetOrder,
                 'decode_content' => false
@@ -245,7 +245,7 @@ class BeneficiarioController extends Controller
                     'decode_content' => false
                 ];
 
-                $cedulaResponse = $client->get('http://192.168.195.1:8080/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
+                $cedulaResponse = $client->get('https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
                     'headers' => $headerscedula,
                 ]);
 
@@ -297,15 +297,14 @@ class BeneficiarioController extends Controller
         $impresion->save();
 
 
-
-
         $bamper = Bamper::where('PerCod', $cedula)->select('PerNom', 'PerNomPri','PerNomSeg', 'PerApePri', 'PerApeSeg', 'PerApeCas', 'PerCod')->first();
 
         if(!empty($bamper)){
 
 
+            // // $codigoQr = QrCode::size(150)->generate(env('APP_URL') . '/' . $PerCod);
+            $codigoQr = QrCode::size(150)->generate(config('app.url') . '/' . $PerCod);
 
-            $codigoQr = QrCode::size(150)->generate(env('APP_URL') . '/' . $PerCod);
             //$codigoQr = QrCode::size(150)->generate($bamper);
             $pdf = PDF::loadView('admin.beneficiario.pdf.constancia',
                     [
@@ -325,12 +324,12 @@ class BeneficiarioController extends Controller
             ];
 
             $GetOrder = [
-                'username' => 'senavitatconsultas',
-                'password' => 'S3n4vitat'
+                'username' => 'muvhConsulta',
+                'password' => '*Sipp*2025**'
             ];
 
             $client = new Client();
-            $res = $client->post('http://192.168.195.1:8080/mbohape-core/sii/security', [
+            $res = $client->post('https://sii.paraguay.gov.py/security', [
                 'headers' => $headers,
                 'json' => $GetOrder,
                 'decode_content' => false
@@ -346,7 +345,7 @@ class BeneficiarioController extends Controller
                     'decode_content' => false
                 ];
 
-                $cedulaResponse = $client->get('http://192.168.195.1:8080/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
+                $cedulaResponse = $client->get('https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
                     'headers' => $headerscedula,
                 ]);
 
@@ -371,7 +370,8 @@ class BeneficiarioController extends Controller
                         'mensaje' => '',
                     ];
 
-                    $codigoQr = QrCode::size(150)->generate(env('APP_URL') . '/' . $PerCod);
+                    // $codigoQr = QrCode::size(150)->generate(env('APP_URL') . '/' . $PerCod);
+                    $codigoQr = QrCode::size(150)->generate(config('app.url') . '/' . $PerCod);
                     $pdf = PDF::loadView('admin.beneficiario.pdf.constancia', [
                         'response' => $response,
                         'valor' => $codigoQr,
