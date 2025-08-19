@@ -69,6 +69,6 @@ $fechaEnLetras = 'a los ' . convertirNumeroALetras($diaActual) . ' (' . $diaActu
 {{-- CORRECCIÓN: El tipo de MIME para SVG es 'image/svg+xml'. --}}
 <img src="data:image/svg+xml;base64, {{ $valor }}" style="left: 550px; width: 100px; height: 100px;" alt="Código QR"><br>
 <p style="font-size:11px; font-family:Times New Roman;"><b>Verifique a través del código QR la validez de este documento.</b></p><br>
-<p style="font-size:11px; font-family:Times New Roman;"><b>Registro de Sistema de Información del MUVH - Resolución Nro. 673</b></p>
+<p style="font-size:11px; font-family:Times New Roman;"><b>Registro de Sistema de Información del MUVH - Resolución Nro. 673/2025</b></p>
 </body>
 </html>
