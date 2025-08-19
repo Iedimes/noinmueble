@@ -1,94 +1,79 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <!-- Required meta tags -->
+<head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MUVH - VALIDACION CONSTANCIA</title>
-  </head>
-  <body>
-    <div class="container">
-          <img src="{{url('img/logofull.jpg')}}" class="img-fluid mx-auto d-block" alt="Image"/>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="container mx-auto p-4 md:p-8">
+        <!-- Logo con el mismo ancho que el contenedor -->
+        <div class="w-full max-w-2xl mx-auto mb-8">
+            <img src="{{ url('img/logofull.jpg') }}" alt="MUVH Logo" class="w-full h-auto rounded-lg shadow-md">
+        </div>
+
         @if (isset($response))
-        <div class="card">
-
-            <h5 class="card-header text-center">CONSTANCIA DE NO POSEER INMUEBLE</h5>
-
-            <div class="card-body">
-                <div class="card-body">
-
-                    <h5 class="card-title text-center">SOLICITANTE: {{ $response['titular'] }}</h5>
-                    <h5 class="card-title text-center"> CEDULA: {{ $response['cedula'] }}</h5>
-
-
-
-
-            </div>
-                <ul class="list-group list-group-flush text-center">
-                    <li class="list-group-item"></li>
-                    {{-- <li class="list-group-item">PROYECTO: {{ trim($proyecto->PylNom) }}</li>
-                    <li class="list-group-item">MANZANA: {{ trim($cuenta->ManCod) }}</li>
-                    <li class="list-group-item">LOTE: {{ trim($cuenta->VivLote) }}</li>
-                    <li class="list-group-item">CTA. CTE CTRAL: {{ trim($cuenta->VivCtaVer) }}</li>
-                    <li class="list-group-item">RESOLUCION: {{ trim($resolucion->CliNrs) }}</li>
-                    <li class="list-group-item">FECHA RESOLUCION: {{ date('d/m/Y', strtotime(trim($resolucion->CliFRes)))}}</li>
-                    <li class="list-group-item">ACTA: {{ $resolucion->CliNac ? trim($resolucion->CliNac): '' }}</li>
-                    <li class="list-group-item">FECHA CONTRATO: {{ date('d/m/Y', strtotime(trim($contrato->CliFchCon)))}}</li>--}}
-                    <li class="list-group-item"><h5>FECHA DE IMPRESION: {{ date('d/m/Y', strtotime(trim($impresion->fecha_impresion)))}}</h5></li>
-                    <li class="list-group-item"></li>
-                </ul>
-                <div class="card-body">
-                    <h5 class="card-title text-center">VALIDO 90 DIAS</h5>
+            <!-- Card de validación exitosa -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden max-w-2xl mx-auto border-t-8 border-red-600">
+                <div class="bg-red-600 text-white p-4">
+                    <h5 class="text-xl font-bold text-center">CONSTANCIA VÁLIDA</h5>
                 </div>
+                <div class="p-6">
+                    <div class="text-center mb-6">
+                        <h4 class="text-2xl font-semibold text-gray-800">DOCUMENTO VERIFICADO CORRECTAMENTE</h4>
+                        <p class="text-gray-500 mt-2">Los datos a continuación corresponden a un documento oficial emitido por el MUVH.</p>
+                    </div>
 
+                    <div class="bg-gray-100 rounded-lg p-4 mb-6">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between">
+                            <div class="mb-4 md:mb-0 md:w-1/2">
+                                <p class="text-sm text-gray-600">SOLICITANTE:</p>
+                                <p class="text-lg font-bold text-red-600">{{ $response['titular'] }}</p>
+                            </div>
+                            <div class="md:w-1/2">
+                                <p class="text-sm text-gray-600">CÉDULA DE IDENTIDAD:</p>
+                                <p class="text-lg font-bold text-red-600">{{ $response['cedula'] }}</p>
+                            </div>
+                        </div>
+                    </div>
 
+                    <ul class="list-none space-y-2 text-center text-gray-700">
+                        <li class="bg-gray-50 rounded-md p-2">
+                            <span class="font-semibold text-sm block">FECHA DE IMPRESIÓN:</span>
+                            <span class="text-base font-bold">{{ date('d/m/Y', strtotime(trim($impresion->fecha_impresion)))}}</span>
+                        </li>
+                    </ul>
+
+                    <div class="mt-6 text-center">
+                        <p class="text-xl font-bold text-green-600">VÁLIDO POR 90 DÍAS</p>
+                    </div>
+                </div>
             </div>
-        </div>
         @else
-
-        <div class="card">
-
-            <h5 class="card-header text-center">CONSTANCIA DE NO POSEER INMUEBLE</h5>
-
-            <div class="card-body">
-                <div class="card-body">
-
-                    {{-- <h5 class="card-title text-center">SOLICITANTE: {{ $response['titular'] }}</h5>
-                    <h5 class="card-title text-center"> CEDULA: {{ $response['cedula'] }}</h5> --}}
-
-
-
-
+            <!-- Card de validación fallida -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden max-w-2xl mx-auto border-t-8 border-red-600">
+                <div class="bg-red-600 text-white p-4">
+                    <h5 class="text-xl font-bold text-center">CONSTANCIA INVÁLIDA</h5>
+                </div>
+                <div class="p-6">
+                    <div class="text-center mb-6">
+                        <h4 class="text-2xl font-semibold text-red-600">ERROR DE VERIFICACIÓN</h4>
+                        <p class="text-gray-500 mt-2">El código escaneado no corresponde a un documento válido del MUVH.</p>
+                    </div>
+                    <div class="bg-gray-100 rounded-lg p-4">
+                        <p class="text-center text-lg font-bold">{{ $mensaje }}</p>
+                    </div>
+                </div>
             </div>
-                <ul class="list-group list-group-flush text-center">
-                    <li class="list-group-item"></li>
-                    {{-- <li class="list-group-item">PROYECTO: {{ trim($proyecto->PylNom) }}</li>
-                    <li class="list-group-item">MANZANA: {{ trim($cuenta->ManCod) }}</li>
-                    <li class="list-group-item">LOTE: {{ trim($cuenta->VivLote) }}</li>
-                    <li class="list-group-item">CTA. CTE CTRAL: {{ trim($cuenta->VivCtaVer) }}</li>
-                    <li class="list-group-item">RESOLUCION: {{ trim($resolucion->CliNrs) }}</li>
-                    <li class="list-group-item">FECHA RESOLUCION: {{ date('d/m/Y', strtotime(trim($resolucion->CliFRes)))}}</li>
-                    <li class="list-group-item">ACTA: {{ $resolucion->CliNac ? trim($resolucion->CliNac): '' }}</li>
-                    <li class="list-group-item">FECHA CONTRATO: {{ date('d/m/Y', strtotime(trim($contrato->CliFchCon)))}}</li>--}}
-                    <li class="list-group-item"><h5>{{ $mensaje }}</h5></li>
-                    <li class="list-group-item"></li>
-                </ul>
-                {{-- <div class="card-body">
-                    <h5 class="card-title text-center">VALIDO 90 DIAS</h5>
-                </div> --}}
-
-
-            </div>
-        </div>
         @endif
-
-      </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
-
-  </body>
+    </div>
+</body>
 </html>

@@ -19,6 +19,7 @@ function convertirAnioALetras($anio)
         return 'dos mil veinticuatro';
     } else {
         // Lógica para convertir el año a letras en otros casos
+        return 'el año ' . $anio;
     }
 }
 
@@ -33,7 +34,19 @@ $anioActual = convertirAnioALetras(date('Y'));
 $fechaEnLetras = 'a los ' . convertirNumeroALetras($diaActual) . ' (' . $diaActual . ') días del mes de ' . $mesActual . ' del año ' . $anioActual;
 ?>
 
-<p style="text-align:right; font-size:17px; font-family:Times New Roman;"><b>NPB {{ $response['cedula'] }}</b></p>
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        hr {
+            border-top: 0.5px solid rgb(182, 180, 180);
+        }
+    </style>
+    <center><img src="{{storage_path('images/MUVHOF.jpg')}}" class="imagencentro" width="700" height="120"></center>
+    <p style="font-size:13px; font-family:Times New Roman; text-align: center;"><b>Misión: Somos la institución rectora de las políticas públicas de vivienda, urbanísticas y del hábitat, gestionando planes, programas y acciones que contribuyan a mejorar la calidad de vida de los habitantes de la República del Paraguay. </b></p>
+</head>
+<body>
+<p style="text-align:right; font-size:17px; font-family:Times New Roman;"><b>NPB {{ $cedula }}</b></p>
 
 <p style="text-align:center; font-size:19px; font-family:Times New Roman;"><b>CONSTANCIA DE NO SER BENEFICIARIO</b></p>
 
@@ -41,8 +54,8 @@ $fechaEnLetras = 'a los ' . convertirNumeroALetras($diaActual) . ' (' . $diaActu
 <br>
 
 <p style="text-align:justify; font-size:15px; font-family:Times New Roman;">
-    Se hace constar que el/la <b>Sr./Sra. {{ $response['titular'] }}</b>
-    con <b>C.I. N°. {{ $response['cedula'] }} </b>, no registra beneficio en el marco de los diferentes Programas y Proyectos Habitacionales del
+    Se hace constar que el/la <b>Sr./Sra. {{ $bamper->PerNom }} {{ $bamper->PerApePri }}</b>
+    con <b>C.I. N°. {{ $cedula }} </b>, no registra beneficio en el marco de los diferentes Programas y Proyectos Habitacionales del
     Ministerio de Urbanismo, Vivienda y Habitat - MUVH, respaldados documental y digitalmente.
     Se expide la presente constancia a pedido del/la interesado/a, {{ $fechaEnLetras }}
 </p>
@@ -52,7 +65,9 @@ $fechaEnLetras = 'a los ' . convertirNumeroALetras($diaActual) . ' (' . $diaActu
 
 <br><br><br>
 
-<img src="data:image/png;base64, {{ base64_encode($valor) }}" style="left: 550px; width: 100px; height: 100px;" alt=""><br>
+{{-- CORRECCIÓN: El tipo de MIME para SVG es 'image/svg+xml'. --}}
+<img src="data:image/svg+xml;base64, {{ $valor }}" style="left: 550px; width: 100px; height: 100px;" alt="Código QR"><br>
 <p style="font-size:11px; font-family:Times New Roman;"><b>Verifique a través del código QR la validez de este documento.</b></p><br>
 <p style="font-size:11px; font-family:Times New Roman;"><b>Registro de Sistema de Información del MUVH - Resolución Nro. xxx</b></p>
-
+</body>
+</html>

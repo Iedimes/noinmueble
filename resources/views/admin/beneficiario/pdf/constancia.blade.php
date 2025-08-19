@@ -16,8 +16,8 @@
 
     </style>
     {{-- <center><img width="900" height="130" src="https://www.muvh.gov.py/sitio/wp-content/uploads/2022/06/muvh-1.jpg"></center> --}}
-    <center><img src="{{storage_path('images/MUVHOF.jpg')}}" class="imagencentro" width="700" height="120"></center>
-    <p style="font-size:13px; font-family:Times New Roman; text-align: center;"><b>Misión: Somos la institución rectora de las políticas públicas de vivienda, urbanísticas y del hábitat, gestionando planes, programas y acciones que contribuyan a mejorar la calidad de vida de los habitantes de la República del Paraguay. </b></p>
+    {{-- <center><img src="{{storage_path('images/MUVHOF.jpg')}}" class="imagencentro" width="700" height="120"></center>
+    <p style="font-size:13px; font-family:Times New Roman; text-align: center;"><b>Misión: Somos la institución rectora de las políticas públicas de vivienda, urbanísticas y del hábitat, gestionando planes, programas y acciones que contribuyan a mejorar la calidad de vida de los habitantes de la República del Paraguay. </b></p> --}}
 
     {{-- <img width="900" height="130" src="C:\Users\osemidei\Documents\beneficiario\storage\app\public\muvh.jpg"></center> --}}
 

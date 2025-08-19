@@ -16,6 +16,7 @@ use App\Models\SHMCER;
 use App\Models\IVMSOL;
 use App\Models\IVMSAS;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use App\Models\Beneficiario;
 use App\Models\Bamper;
 use App\Models\Proyecto;
@@ -51,167 +52,114 @@ class BeneficiarioController extends Controller
      */
 
      public function index($cedula)
-     {
-         if (!empty($cedula)) {
-             $persona = Bamper::where('PerCod', $cedula)->select('PerNom', 'PerCod')->first();
+    {
+        if (empty($cedula)) {
+            return response()->json([
+                'error' => 'Cédula no proporcionada.'
+            ])->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
+        }
 
-             if (!empty($persona)) {
-                 $certificados = SHMCER::where('CerPosCod', $cedula)->get();
-                 $certificadosconyuge = SHMCER::where('CerCoCI', $cedula)->get();
-                 $cartera = PRMCLI::where('PerCod', $cedula)
-                     ->where('PylCod', '!=', 'P.F.')
-                     ->get();
-                $solicitantetitular = IVMSOL::where('SolPerCod', $cedula)
-                                                            ->where('SolEtapa', 'B')
-                                                            ->first();
-                 $solicitanteconyuge = IVMSOL::where('SolPerCge', $cedula)->first();
-                 $cepratitular = IVMSAS::where('SASCI', $cedula)->first();
-                 $cepraconyuge = IVMSAS::where('CICONY', $cedula)->first();
+        $persona = Bamper::where('PerCod', $cedula)->select('PerNom', 'PerCod')->first();
 
-                 $headers = [
-                     'Content-Type' => 'application/json',
-                     'Accept' => 'application/json'
-                 ];
+        $certificados = SHMCER::where('CerPosCod', $cedula)->get();
+        $certificadosconyuge = SHMCER::where('CerCoCI', $cedula)->get();
+        $cartera = PRMCLI::where('PerCod', $cedula)
+            ->where('PylCod', '!=', 'P.F.')
+            ->get();
+        $solicitantetitular = IVMSOL::where('SolPerCod', $cedula)->where('SolEtapa', 'B')->first();
+        $solicitanteconyuge = IVMSOL::where('SolPerCge', $cedula)->first();
+        $cepratitular = IVMSAS::where('SASCI', $cedula)->first();
+        $cepraconyuge = IVMSAS::where('CICONY', $cedula)->first();
 
-                 $GetOrder = [
-                     'username' => 'muvhConsulta',
-                     'password' => '*Sipp*2025**'
-                 ];
+        $response = [
+            'cedula' => $cedula,
+            'titular' => $persona ? $persona->PerNom : '',
+            'mensaje' => '',
+        ];
 
-                 $client = new Client();
-                 $res = $client->post('https://sii.paraguay.gov.py/security', [
-                     'headers' => $headers,
-                     'json' => $GetOrder,
-                     'decode_content' => false
-                 ]);
+        // Verificación de beneficios
+        if (
+            $certificados->isNotEmpty() ||
+            $certificadosconyuge->isNotEmpty() ||
+            $cartera->isNotEmpty() ||
+            $solicitantetitular ||
+            $solicitanteconyuge ||
+            $cepratitular ||
+            $cepraconyuge
+        ) {
+            $response['mensaje'] = 'UD. CUENTA CON BENEFICIO EN EL MINISTERIO DE URBANISMO, VIVIENDA Y HABITAT. NO ES POSIBLE IMPRIMIR LA CONSTANCIA.';
+            return response()->json($response)
+                ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                ->header('Pragma', 'no-cache')
+                ->header('Expires', '0');
+        }
 
-                 $contents = $res->getBody()->getContents();
-                 $book = json_decode($contents);
+        // Si hay persona, consultamos la API
+        $headers = ['Content-Type' => 'application/json', 'Accept' => 'application/json'];
+        $GetOrder = ['username' => 'muvhConsulta', 'password' => '*Sipp*2025**'];
+        $client = new Client();
+        $res = $client->post('https://sii.paraguay.gov.py/security', [
+            'headers' => $headers,
+            'json' => $GetOrder,
+            'decode_content' => false
+        ]);
 
-                 if ($book->success == true) {
-                     $headerscedula = [
-                         'Authorization' => 'Bearer ' . $book->token,
-                         'Accept' => 'application/json',
-                         'decode_content' => false
-                     ];
+        $contents = $res->getBody()->getContents();
+        $book = json_decode($contents);
 
-                     $cedulaResponse = $client->get('https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
-                         'headers' => $headerscedula,
-                     ]);
-
-                     $datos = $cedulaResponse->getBody()->getContents();
-                     $datospersona = json_decode($datos);
-
-                     if (isset($datospersona->obtenerPersonaPorNroCedulaResponse->return->error)) {
-                         return redirect()->back()->with('status', $datospersona->obtenerPersonaPorNroCedulaResponse->return->error);
-                     } else {
-                         $nombre = $datospersona->obtenerPersonaPorNroCedulaResponse->return->nombres;
-                         $apellido = $datospersona->obtenerPersonaPorNroCedulaResponse->return->apellido;
-                         $cedula = $datospersona->obtenerPersonaPorNroCedulaResponse->return->cedula;
-                         $sexo = $datospersona->obtenerPersonaPorNroCedulaResponse->return->sexo;
-                         $fecha = date('Y-m-d H:i:s.v', strtotime($datospersona->obtenerPersonaPorNroCedulaResponse->return->fechNacim));
-                         $nac = $datospersona->obtenerPersonaPorNroCedulaResponse->return->nacionalidadBean;
-                         $est = $datospersona->obtenerPersonaPorNroCedulaResponse->return->estadoCivil;
-                         $nroexp = $cedula;
-
-                         $response = [
-                             'cedula' => $cedula,
-                             'titular' => $nombre . ' ' . $apellido,
-                             'mensaje' => '',
-                         ];
-
-                         if (
-                             $certificados->isNotEmpty() ||
-                             $certificadosconyuge->isNotEmpty() ||
-                             $cartera->isNotEmpty() ||
-                             $solicitantetitular ||
-                             $solicitanteconyuge ||
-                             $cepratitular ||
-                             $cepraconyuge
-                         ) {
-                             $response['mensaje'] = 'UD. CUENTA CON BENEFICIO EN EL MINISTERIO DE URBANISMO, VIVIENDA Y HABITAT. NO ES POSIBLE IMPRIMIR LA CONSTANCIA.';
-                         }
-
-                         return $response;
-                     }
-                 }
-             } else {
-                //return "si esta vacio o no existe";
-                $certificados = SHMCER::where('CerPosCod', $cedula)->get();
-                $certificadosconyuge = SHMCER::where('CerCoCI', $cedula)->get();
-                $cartera = PRMCLI::where('PerCod', $cedula)
-                    ->where('PylCod', '!=', 'P.F.')
-                    ->get();
-                $solicitantetitular = IVMSOL::where('SolPerCod', $cedula)
-                    ->where('SolEtapa', 'B')
-                    ->first();
-                $solicitanteconyuge = IVMSOL::where('SolPerCge', $cedula)->first();
-                $cepratitular = IVMSAS::where('SASCI', $cedula)->first();
-                $cepraconyuge = IVMSAS::where('CICONY', $cedula)->first();
-
-                $headers = [
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json'
-                ];
-
-                $GetOrder = [
-                    'username' => 'muvhConsulta',
-                    'password' => '*Sipp*2025**'
-                ];
-
-                $client = new Client();
-                $res = $client->post('https://sii.paraguay.gov.py/security', [
-                    'headers' => $headers,
-                    'json' => $GetOrder,
-                    'decode_content' => false
-                ]);
-
-                $contents = $res->getBody()->getContents();
-                $book = json_decode($contents);
-
-                if ($book->success == true) {
-                    $headerscedula = [
+        if ($book->success == true) {
+            $cedulaResponse = $client->get(
+                'https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula,
+                [
+                    'headers' => [
                         'Authorization' => 'Bearer ' . $book->token,
                         'Accept' => 'application/json',
-                        'decode_content' => false
-                    ];
+                        'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                        'Pragma' => 'no-cache',
+                        'Expires' => '0',
+                        'Connection' => 'close',
+                    ],
+                    'query' => ['_t' => uniqid()],
+                    'http_errors' => false,
+                    'decode_content' => false,
+                ]
+            );
 
-                    $cedulaResponse = $client->get('https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
-                        'headers' => $headerscedula,
-                    ]);
+            $datos = $cedulaResponse->getBody()->getContents();
+            $datospersona = json_decode($datos);
 
-                    $datos = $cedulaResponse->getBody()->getContents();
-                    $datospersona = json_decode($datos);
+            if (isset($datospersona->obtenerPersonaPorNroCedulaResponse->return->error)) {
+                return response()->json([
+                    'error' => $datospersona->obtenerPersonaPorNroCedulaResponse->return->error
+                ])->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                ->header('Pragma', 'no-cache')
+                ->header('Expires', '0');
+            } else {
+                $nombre = $datospersona->obtenerPersonaPorNroCedulaResponse->return->nombres;
+                $apellido = $datospersona->obtenerPersonaPorNroCedulaResponse->return->apellido;
 
-                    if (isset($datospersona->obtenerPersonaPorNroCedulaResponse->return->error)) {
-                        return redirect()->back()->with('status', $datospersona->obtenerPersonaPorNroCedulaResponse->return->error);
-                    } else {
-                        $nombre = $datospersona->obtenerPersonaPorNroCedulaResponse->return->nombres;
-                        $apellido = $datospersona->obtenerPersonaPorNroCedulaResponse->return->apellido;
-                        $cedula = $datospersona->obtenerPersonaPorNroCedulaResponse->return->cedula;
-                        $sexo = $datospersona->obtenerPersonaPorNroCedulaResponse->return->sexo;
-                        $fecha = date('Y-m-d H:i:s.v', strtotime($datospersona->obtenerPersonaPorNroCedulaResponse->return->fechNacim));
-                        $nac = $datospersona->obtenerPersonaPorNroCedulaResponse->return->nacionalidadBean;
-                        $est = $datospersona->obtenerPersonaPorNroCedulaResponse->return->estadoCivil;
-                        $nroexp = $cedula;
+                $response['titular'] = $nombre . ' ' . $apellido;
 
-                        $response = [
-                            'cedula' => $cedula,
-                            'titular' => $nombre . ' ' . $apellido,
-                            'mensaje' => '',
-                        ];
-
-                     return $response;
-                    }
-                }
+                return response()->json($response)
+                    ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                    ->header('Pragma', 'no-cache')
+                    ->header('Expires', '0');
             }
+        }
 
-         }
-     }
+        // Si no hay API disponible, devolvemos los datos de BD
+        return response()->json($response)
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
+    }
 
 
 
-   public function verificacion($cedula)
+
+    public function verificacion($cedula)
     {
 
 
@@ -240,14 +188,33 @@ class BeneficiarioController extends Controller
 
             if ($book->success == true) {
                 $headerscedula = [
-                    'Authorization' => 'Bearer ' . $book->token,
-                    'Accept' => 'application/json',
-                    'decode_content' => false
-                ];
+                'Authorization' => 'Bearer ' . $book->token,
+                'Accept' => 'application/json',
+                'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                'Pragma' => 'no-cache',
+                'Expires' => '0',
+                'Connection' => 'close',
+            ];
 
-                $cedulaResponse = $client->get('https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
-                    'headers' => $headerscedula,
-                ]);
+
+               $cedulaResponse = $client->get(
+                    'https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula,
+                    [
+                        'headers' => [
+                            'Authorization' => 'Bearer ' . $book->token,
+                            'Accept'        => 'application/json',
+                            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                            'Pragma'        => 'no-cache',
+                            'Expires'       => '0',
+                            'Connection'    => 'close',
+                        ],
+                        'query' => [
+                            '_t' => uniqid(), // 🔑 cambia cada request
+                        ],
+                        'http_errors'     => false,
+                        'decode_content'  => false,
+                    ]
+                );
 
                 $datos = $cedulaResponse->getBody()->getContents();
                 $datospersona = json_decode($datos);
@@ -257,8 +224,7 @@ class BeneficiarioController extends Controller
                 } else {
                     $nombre = $datospersona->obtenerPersonaPorNroCedulaResponse->return->nombres;
                     $apellido = $datospersona->obtenerPersonaPorNroCedulaResponse->return->apellido;
-                    $cedula = $datospersona->obtenerPersonaPorNroCedulaResponse->return->cedula;
-                    $sexo = $datospersona->obtenerPersonaPorNroCedulaResponse->return->sexo;
+                    $cedulaApi = $datospersona->obtenerPersonaPorNroCedulaResponse->return->cedula;                     $sexo = $datospersona->obtenerPersonaPorNroCedulaResponse->return->sexo;
                     $fecha = date('Y-m-d H:i:s.v', strtotime($datospersona->obtenerPersonaPorNroCedulaResponse->return->fechNacim));
                     $nac = $datospersona->obtenerPersonaPorNroCedulaResponse->return->nacionalidadBean;
                     $est = $datospersona->obtenerPersonaPorNroCedulaResponse->return->estadoCivil;
@@ -287,101 +253,103 @@ class BeneficiarioController extends Controller
 
 
 
-    public function createPDF($PerCod)
+     public function createPDF($PerCod)
     {
+        // Usa un bloque try-catch para manejar errores de la API y otros fallos.
+        try {
+            $cedula = $PerCod;
 
-        $cedula=$PerCod;
-        $impresion = new Impresion;
-        $impresion->ci=$PerCod;
-        $impresion->fecha_impresion = date('Y-m-d h:i:s');
-        $impresion->save();
+            // Registrar impresión
+            $impresion = new Impresion;
+            $impresion->ci = $PerCod;
+            $impresion->fecha_impresion = date('Y-m-d H:i:s');
+            $impresion->save();
 
-
-        $bamper = Bamper::where('PerCod', $cedula)->select('PerNom', 'PerNomPri','PerNomSeg', 'PerApePri', 'PerApeSeg', 'PerApeCas', 'PerCod')->first();
-
-        if(!empty($bamper)){
-
-
-            // // $codigoQr = QrCode::size(150)->generate(env('APP_URL') . '/' . $PerCod);
-            $codigoQr = QrCode::size(150)->generate(config('app.url') . '/' . $PerCod);
-
-            //$codigoQr = QrCode::size(150)->generate($bamper);
-            $pdf = PDF::loadView('admin.beneficiario.pdf.constancia',
-                    [
-                       'bamper' => $bamper,
-                       'valor' => $codigoQr,
-                       'cedula' => trim($bamper['PerCod']),
-                    ]
-                );
-                return $pdf->download('Constancia.pdf');
-
-        }else{
-            //return "buscar en identificaciones";
-
-            $headers = [
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json'
-            ];
-
-            $GetOrder = [
-                'username' => 'muvhConsulta',
-                'password' => '*Sipp*2025**'
-            ];
-
+            // --- Lógica de la primera API (token) ---
             $client = new Client();
+            $headers = ['Content-Type' => 'application/json', 'Accept' => 'application/json'];
+            $getOrder = ['username' => 'muvhConsulta', 'password' => '*Sipp*2025**'];
+
+            // Envuelve la llamada Guzzle en un try-catch para manejar errores de conexión/respuesta.
             $res = $client->post('https://sii.paraguay.gov.py/security', [
                 'headers' => $headers,
-                'json' => $GetOrder,
+                'json' => $getOrder,
                 'decode_content' => false
             ]);
 
             $contents = $res->getBody()->getContents();
             $book = json_decode($contents);
 
-            if ($book->success == true) {
-                $headerscedula = [
-                    'Authorization' => 'Bearer ' . $book->token,
-                    'Accept' => 'application/json',
-                    'decode_content' => false
-                ];
-
-                $cedulaResponse = $client->get('https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula, [
-                    'headers' => $headerscedula,
-                ]);
-
-                $datos = $cedulaResponse->getBody()->getContents();
-                $datospersona = json_decode($datos);
-
-                if (isset($datospersona->obtenerPersonaPorNroCedulaResponse->return->error)) {
-                    return redirect()->back()->with('status', $datospersona->obtenerPersonaPorNroCedulaResponse->return->error);
-                } else {
-                    $nombre = $datospersona->obtenerPersonaPorNroCedulaResponse->return->nombres;
-                    $apellido = $datospersona->obtenerPersonaPorNroCedulaResponse->return->apellido;
-                    $cedula = $datospersona->obtenerPersonaPorNroCedulaResponse->return->cedula;
-                    $sexo = $datospersona->obtenerPersonaPorNroCedulaResponse->return->sexo;
-                    $fecha = date('Y-m-d H:i:s.v', strtotime($datospersona->obtenerPersonaPorNroCedulaResponse->return->fechNacim));
-                    $nac = $datospersona->obtenerPersonaPorNroCedulaResponse->return->nacionalidadBean;
-                    $est = $datospersona->obtenerPersonaPorNroCedulaResponse->return->estadoCivil;
-                    $nroexp = $cedula;
-
-                    $response = [
-                        'cedula' => $cedula,
-                        'titular' => $nombre . ' ' . $apellido,
-                        'mensaje' => '',
-                    ];
-
-                    // $codigoQr = QrCode::size(150)->generate(env('APP_URL') . '/' . $PerCod);
-                    $codigoQr = QrCode::size(150)->generate(config('app.url') . '/' . $PerCod);
-                    $pdf = PDF::loadView('admin.beneficiario.pdf.constancia', [
-                        'response' => $response,
-                        'valor' => $codigoQr,
-                    ]);
-                    return $pdf->download('Constancia.pdf');
-                }
-
+            // Verifica si la decodificación JSON fue exitosa.
+            if (json_last_error() !== JSON_ERROR_NONE || !$book || !isset($book->success) || $book->success !== true) {
+                abort(500, 'Error al obtener el token de la API del SII. La respuesta no es válida.');
             }
 
+            // --- Lógica de la segunda API (datos de la persona) ---
+            $cedulaResponse = $client->get(
+                'https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula,
+                [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $book->token,
+                        'Accept' => 'application/json',
+                        'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                        'Pragma' => 'no-cache',
+                        'Expires' => '0',
+                        'Connection' => 'close',
+                    ],
+                    'query' => ['_t' => uniqid()],
+                    'http_errors' => false,
+                    'decode_content' => false,
+                ]
+            );
 
+            $datos = $cedulaResponse->getBody()->getContents();
+            $datospersona = json_decode($datos);
+
+            // Verifica si la decodificación JSON de la segunda API fue exitosa.
+            if (json_last_error() !== JSON_ERROR_NONE || !$datospersona) {
+                abort(500, 'Error al decodificar la respuesta de la API de persona. La respuesta no es válida.');
+            }
+
+            // Si la API devuelve un error específico, lo manejamos.
+            if (isset($datospersona->obtenerPersonaPorNroCedulaResponse->return->error)) {
+                abort(404, $datospersona->obtenerPersonaPorNroCedulaResponse->return->error);
+            }
+
+            // Crear un objeto similar a Bamper para la vista
+            $bamperApi = (object)[
+                'PerNom' => $datospersona->obtenerPersonaPorNroCedulaResponse->return->nombres,
+                'PerApePri' => $datospersona->obtenerPersonaPorNroCedulaResponse->return->apellido,
+                'PerCod' => $cedula,
+            ];
+
+            // Asegúrate de que $codigoQr esté definido antes de usarlo.
+            // Genera el QR con la información de la cédula y la fecha de impresión.
+            $qrData = json_encode([
+                'cedula' => $cedula,
+                'fecha_impresion' => $impresion->fecha_impresion,
+                'nombres' => $bamperApi->PerNom,
+                'apellidos' => $bamperApi->PerApePri
+            ]);
+            // CORRECCIÓN: Usar $bamperApi->PerCod para generar el QR
+            $codigoQr = base64_encode(QrCode::format('svg')->size(150)->generate(config('app.url') . '/' . $bamperApi->PerCod));
+
+            $pdf = PDF::loadView('admin.beneficiario.pdf.constancia', [
+                'bamper' => $bamperApi,
+                'valor' => $codigoQr,
+                'cedula' => $cedula,
+            ]);
+
+            return $pdf->download('Constancia.pdf');
+
+        } catch (RequestException $e) {
+            // Captura errores específicos de Guzzle (conexión, timeouts, respuestas 4xx/5xx).
+            $statusCode = $e->hasResponse() ? $e->getResponse()->getStatusCode() : 500;
+            $message = $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : $e->getMessage();
+            abort($statusCode, 'Error de la API: ' . $message);
+        } catch (\Exception $e) {
+            // Captura cualquier otro error no previsto (variable no definida, etc.).
+            abort(500, 'Ocurrió un error inesperado: ' . $e->getMessage());
         }
     }
 
