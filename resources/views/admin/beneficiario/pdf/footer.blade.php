@@ -15,8 +15,9 @@
     <br>
     <tr>
 
-        <td style="text-align:center;font-size:11px;font-weight:bold;">VISIÓN. Ser el ente público de reconocido liderazgo por brindar soluciones habitacionales priorizando a los sectores más vulnerables, promoviendo
-            un territorio ordenado y sostenible, en el ámbito urbanístico, habitacional y del hábitat.</td>
+        <td style="text-align:center;font-size:11px;font-weight:bold;">VISIÓN. Ser un organismo público reconocido por brindar soluciones
+            , de hábitat y ubanísticas opotunas, innovadoras y de calidad, que promueva un territorio ordenado y sostenible con transparencia,
+            equidad y honestidad.</td>
 
     </tr>
     <tr>

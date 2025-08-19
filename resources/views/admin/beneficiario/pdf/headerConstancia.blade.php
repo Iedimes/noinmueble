@@ -43,7 +43,8 @@ $fechaEnLetras = 'a los ' . convertirNumeroALetras($diaActual) . ' (' . $diaActu
         }
     </style>
     <center><img src="{{storage_path('images/MUVHOF.jpg')}}" class="imagencentro" width="700" height="120"></center>
-    <p style="font-size:13px; font-family:Times New Roman; text-align: center;"><b>Misión: Somos la institución rectora de las políticas públicas de vivienda, urbanísticas y del hábitat, gestionando planes, programas y acciones que contribuyan a mejorar la calidad de vida de los habitantes de la República del Paraguay. </b></p>
+    <p style="font-size:13px; font-family:Times New Roman; text-align: center;"><b>Misión: Somos la institución pública rectora de las políticas públicas habitacionales, urbanísticas y del hábitat, orientada a la disminución del déficit habitacional,
+         en un entorno adecuado que mejore la calidad de vida de las familias paraguayas. </b></p>
 </head>
 <body>
 <p style="text-align:right; font-size:17px; font-family:Times New Roman;"><b>NPB {{ $cedula }}</b></p>
@@ -68,6 +69,6 @@ $fechaEnLetras = 'a los ' . convertirNumeroALetras($diaActual) . ' (' . $diaActu
 {{-- CORRECCIÓN: El tipo de MIME para SVG es 'image/svg+xml'. --}}
 <img src="data:image/svg+xml;base64, {{ $valor }}" style="left: 550px; width: 100px; height: 100px;" alt="Código QR"><br>
 <p style="font-size:11px; font-family:Times New Roman;"><b>Verifique a través del código QR la validez de este documento.</b></p><br>
-<p style="font-size:11px; font-family:Times New Roman;"><b>Registro de Sistema de Información del MUVH - Resolución Nro. xxx</b></p>
+<p style="font-size:11px; font-family:Times New Roman;"><b>Registro de Sistema de Información del MUVH - Resolución Nro. 673</b></p>
 </body>
 </html>
