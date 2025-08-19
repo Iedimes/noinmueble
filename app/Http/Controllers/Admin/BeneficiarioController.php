@@ -332,7 +332,7 @@ class BeneficiarioController extends Controller
                 'apellidos' => $bamperApi->PerApePri
             ]);
             // CORRECCIÓN: Usar $bamperApi->PerCod para generar el QR
-            $codigoQr = base64_encode(QrCode::format('svg')->size(150)->generate(config('app.url') . '/' . $bamperApi->PerCod));
+            $codigoQr = base64_encode(QrCode::format('svg')->size(150)->generate(config('app.url') . '/verificacion/' . $bamperApi->PerCod));
 
             $pdf = PDF::loadView('admin.beneficiario.pdf.constancia', [
                 'bamper' => $bamperApi,
