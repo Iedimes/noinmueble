@@ -69,7 +69,7 @@ class BeneficiarioController extends Controller
             ->where('PylCod', '!=', 'P.F.')
             ->get();
         $solicitantetitular = IVMSOL::where('SolPerCod', $cedula)->where('SolEtapa', 'B')->first();
-        $solicitanteconyuge = IVMSOL::where('SolPerCge', $cedula)->first();
+        $solicitanteconyuge = IVMSOL::where('SolPerCge', $cedula)->where('SolEtapa', 'B')->first();
         $cepratitular = IVMSAS::where('SASCI', $cedula)->first();
         $cepraconyuge = IVMSAS::where('CICONY', $cedula)->first();
 
