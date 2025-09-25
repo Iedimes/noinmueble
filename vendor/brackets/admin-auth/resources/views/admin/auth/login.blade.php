@@ -43,9 +43,9 @@
 										<input type="hidden" name="remember" value="1">
 										<button type="submit" class="btn btn-primary btn-block btn-spinner"><i class="fa"></i> {{ trans('brackets/admin-auth::admin.login.button') }}</button>
 									</div>
-									<div class="form-group text-center">
+									{{-- <div class="form-group text-center">
 										<a href="{{ url('/admin/password-reset') }}" class="auth-ghost-link">{{ trans('brackets/admin-auth::admin.login.forgot_password') }}</a>
-									</div>
+									</div> --}}
 								</div>
 							</form>
 						</auth-form>
