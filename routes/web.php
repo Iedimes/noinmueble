@@ -13,9 +13,17 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('brackets/admin-auth::admin.auth.login');
+// Route::get('/', function () {
+//     return view('brackets/admin-auth::admin.auth.login');
+// });
+
+//ESTA ES LA CLAVE: guest:admin redirige a /admin si ya está logueado
+Route::middleware(['guest:admin'])->group(function () {
+    Route::get('/', function () {
+        return view('brackets/admin-auth::admin.auth.login');
+    });
 });
+
 
 // Route::get('/', 'App\Http\Controllers\Admin\HomeController@dashboard');
 
