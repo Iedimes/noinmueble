@@ -37,6 +37,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use PDF;
+use Illuminate\Support\Facades\Cache;
 
 
 
@@ -100,56 +101,92 @@ class BeneficiarioController extends Controller
         $headers = ['Content-Type' => 'application/json', 'Accept' => 'application/json'];
         $GetOrder = ['username' => 'muvhConsulta', 'password' => '*Sipp*2025**'];
         $client = new Client();
-        $res = $client->post('https://sii.paraguay.gov.py/security', [
-            'headers' => $headers,
-            'json' => $GetOrder,
-            'decode_content' => false
-        ]);
+        $cacheKey = 'persona_' . md5($cedula);
 
-        $contents = $res->getBody()->getContents();
-        $book = json_decode($contents);
+        try {
+            $res = $client->post('https://sii.paraguay.gov.py/security', [
+                'headers' => $headers,
+                'json' => $GetOrder,
+                'decode_content' => false
+            ]);
 
-        if ($book->success == true) {
-            $cedulaResponse = $client->get(
-                'https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula,
-                [
-                    'headers' => [
-                        'Authorization' => 'Bearer ' . $book->token,
-                        'Accept' => 'application/json',
-                        'Cache-Control' => 'no-cache, no-store, must-revalidate',
-                        'Pragma' => 'no-cache',
-                        'Expires' => '0',
-                        'Connection' => 'close',
-                    ],
-                    'query' => ['_t' => uniqid()],
-                    'http_errors' => false,
-                    'decode_content' => false,
-                ]
-            );
+            $contents = $res->getBody()->getContents();
+            $book = json_decode($contents);
 
-            $datos = $cedulaResponse->getBody()->getContents();
-            $datospersona = json_decode($datos);
+            if ($book->success == true) {
+                $cedulaResponse = $client->get(
+                    'https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula,
+                    [
+                        'headers' => [
+                            'Authorization' => 'Bearer ' . $book->token,
+                            'Accept' => 'application/json',
+                            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                            'Pragma' => 'no-cache',
+                            'Expires' => '0',
+                            'Connection' => 'close',
+                        ],
+                        'query' => ['_t' => uniqid()],
+                        'http_errors' => false,
+                        'decode_content' => false,
+                    ]
+                );
 
-            if (isset($datospersona->obtenerPersonaPorNroCedulaResponse->return->error)) {
-                return response()->json([
-                    'error' => $datospersona->obtenerPersonaPorNroCedulaResponse->return->error
-                ])->header('Cache-Control', 'no-cache, no-store, must-revalidate')
-                ->header('Pragma', 'no-cache')
-                ->header('Expires', '0');
-            } else {
-                $nombre = $datospersona->obtenerPersonaPorNroCedulaResponse->return->nombres;
-                $apellido = $datospersona->obtenerPersonaPorNroCedulaResponse->return->apellido;
+                $datos = $cedulaResponse->getBody()->getContents();
+                $datospersona = json_decode($datos);
 
-                $response['titular'] = $nombre . ' ' . $apellido;
-
-                return response()->json($response)
-                    ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                if (isset($datospersona->obtenerPersonaPorNroCedulaResponse->return->error)) {
+                    return response()->json([
+                        'error' => $datospersona->obtenerPersonaPorNroCedulaResponse->return->error
+                    ])->header('Cache-Control', 'no-cache, no-store, must-revalidate')
                     ->header('Pragma', 'no-cache')
                     ->header('Expires', '0');
+                    } else {
+                    $nombre = $datospersona->obtenerPersonaPorNroCedulaResponse->return->nombres ?? '';
+                    $apellido = $datospersona->obtenerPersonaPorNroCedulaResponse->return->apellido ?? '';
+
+                    // Normalizar caracteres
+                    $nombre = mb_convert_encoding($nombre, 'UTF-8', 'auto');
+                    $apellido = mb_convert_encoding($apellido, 'UTF-8', 'auto');
+                    $nombre = preg_replace('/[^\P{C}]+/u', '', $nombre);
+                    $apellido = preg_replace('/[^\P{C}]+/u', '', $apellido);
+
+                    // Guardar datos en cache
+                    Cache::put($cacheKey, [
+                        'nombres' => $nombre,
+                        'apellido' => $apellido,
+                        'cedula' => $cedula
+                    ], now()->addMinutes(10));
+
+                    $response['titular'] = trim($nombre . ' ' . $apellido);
+
+                    return response()->json($response)
+                        ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                        ->header('Pragma', 'no-cache')
+                        ->header('Expires', '0');
+                }
             }
+           } catch (\Exception $e) {
+                // Fallback al cache si la API falla
+                $datosCache = Cache::get($cacheKey);
+                if ($datosCache) {
+                    $response['titular'] = $datosCache['nombres'] . ' ' . $datosCache['apellido'];
+                    return response()->json($response)
+                        ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                        ->header('Pragma', 'no-cache')
+                        ->header('Expires', '0');
+                }
         }
 
-        // Si no hay API disponible, devolvemos los datos de BD
+        // Si no se pudo obtener el nombre ni de API ni de cache
+        if (empty($response['titular'])) {
+            return response()->json([
+                'error' => 'No se pudo obtener los datos del titular. Intente nuevamente más tarde.'
+            ])->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
+        }
+
+        // Fallback final
         return response()->json($response)
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
             ->header('Pragma', 'no-cache')
@@ -255,84 +292,34 @@ class BeneficiarioController extends Controller
 
      public function createPDF($PerCod)
     {
-        // Usa un bloque try-catch para manejar errores de la API y otros fallos.
         try {
             $cedula = $PerCod;
+            $cacheKey = 'persona_' . md5($cedula);
+
+            // Intentar obtener datos del cache
+            $datosCache = Cache::get($cacheKey);
+
+            if ($datosCache) {
+                // Usar datos del cache
+                $bamperApi = (object)[
+                    'PerNom' => $datosCache['nombres'],
+                    'PerApePri' => $datosCache['apellido'],
+                    'PerCod' => $cedula,
+                ];
+            } else {
+                return "No hay datos en caché para esta cédula.";
+            }
 
             // Registrar impresión
             $impresion = new Impresion;
             $impresion->ci = $PerCod;
-            $impresion->fecha_impresion = date('Y-m-d H:i:s');
+            $impresion->fecha_impresion = now();
             $impresion->save();
 
-            // --- Lógica de la primera API (token) ---
-            $client = new Client();
-            $headers = ['Content-Type' => 'application/json', 'Accept' => 'application/json'];
-            $getOrder = ['username' => 'muvhConsulta', 'password' => '*Sipp*2025**'];
-
-            // Envuelve la llamada Guzzle en un try-catch para manejar errores de conexión/respuesta.
-            $res = $client->post('https://sii.paraguay.gov.py/security', [
-                'headers' => $headers,
-                'json' => $getOrder,
-                'decode_content' => false
-            ]);
-
-            $contents = $res->getBody()->getContents();
-            $book = json_decode($contents);
-
-            // Verifica si la decodificación JSON fue exitosa.
-            if (json_last_error() !== JSON_ERROR_NONE || !$book || !isset($book->success) || $book->success !== true) {
-                abort(500, 'Error al obtener el token de la API del SII. La respuesta no es válida.');
-            }
-
-            // --- Lógica de la segunda API (datos de la persona) ---
-            $cedulaResponse = $client->get(
-                'https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula,
-                [
-                    'headers' => [
-                        'Authorization' => 'Bearer ' . $book->token,
-                        'Accept' => 'application/json',
-                        'Cache-Control' => 'no-cache, no-store, must-revalidate',
-                        'Pragma' => 'no-cache',
-                        'Expires' => '0',
-                        'Connection' => 'close',
-                    ],
-                    'query' => ['_t' => uniqid()],
-                    'http_errors' => false,
-                    'decode_content' => false,
-                ]
-            );
-
-            $datos = $cedulaResponse->getBody()->getContents();
-            $datospersona = json_decode($datos);
-
-            // Verifica si la decodificación JSON de la segunda API fue exitosa.
-            if (json_last_error() !== JSON_ERROR_NONE || !$datospersona) {
-                abort(500, 'Error al decodificar la respuesta de la API de persona. La respuesta no es válida.');
-            }
-
-            // Si la API devuelve un error específico, lo manejamos.
-            if (isset($datospersona->obtenerPersonaPorNroCedulaResponse->return->error)) {
-                abort(404, $datospersona->obtenerPersonaPorNroCedulaResponse->return->error);
-            }
-
-            // Crear un objeto similar a Bamper para la vista
-            $bamperApi = (object)[
-                'PerNom' => $datospersona->obtenerPersonaPorNroCedulaResponse->return->nombres,
-                'PerApePri' => $datospersona->obtenerPersonaPorNroCedulaResponse->return->apellido,
-                'PerCod' => $cedula,
-            ];
-
-            // Asegúrate de que $codigoQr esté definido antes de usarlo.
-            // Genera el QR con la información de la cédula y la fecha de impresión.
-            $qrData = json_encode([
-                'cedula' => $cedula,
-                'fecha_impresion' => $impresion->fecha_impresion,
-                'nombres' => $bamperApi->PerNom,
-                'apellidos' => $bamperApi->PerApePri
-            ]);
-            // CORRECCIÓN: Usar $bamperApi->PerCod para generar el QR
-            $codigoQr = base64_encode(QrCode::format('svg')->size(150)->generate(config('app.url') . '/verificacion/' . $bamperApi->PerCod));
+            // Generar QR
+            $codigoQr = base64_encode(QrCode::format('svg')->size(150)->generate(
+                config('app.url') . '/verificacion/' . $bamperApi->PerCod
+            ));
 
             $pdf = PDF::loadView('admin.beneficiario.pdf.constancia', [
                 'bamper' => $bamperApi,
@@ -342,16 +329,11 @@ class BeneficiarioController extends Controller
 
             return $pdf->download('Constancia.pdf');
 
-        } catch (RequestException $e) {
-            // Captura errores específicos de Guzzle (conexión, timeouts, respuestas 4xx/5xx).
-            $statusCode = $e->hasResponse() ? $e->getResponse()->getStatusCode() : 500;
-            $message = $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : $e->getMessage();
-            abort($statusCode, 'Error de la API: ' . $message);
         } catch (\Exception $e) {
-            // Captura cualquier otro error no previsto (variable no definida, etc.).
             abort(500, 'Ocurrió un error inesperado: ' . $e->getMessage());
         }
     }
+
 
 
 
