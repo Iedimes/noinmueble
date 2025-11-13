@@ -4,7 +4,7 @@
       <div class="col">
         <div class="card">
           <div class="card-header">
-            <i class="fa fa-align-justify"></i> CONSTANCIA DE NO POSEER INMUEBLE
+            <i class="fa fa-align-justify"></i> CONSTANCIA DE NO SER BENEFICIARIO
           </div>
           <div class="card-body" v-cloak>
             <div class="card-block">
