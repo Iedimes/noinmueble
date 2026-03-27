@@ -64,8 +64,10 @@ class BeneficiarioController extends Controller
 
         $persona = Bamper::where('PerCod', $cedula)->select('PerNom', 'PerCod')->first();
 
-        $certificados = SHMCER::where('CerPosCod', $cedula)->get();
-        $certificadosconyuge = SHMCER::where('CerCoCI', $cedula)->get();
+        //$certificados = SHMCER::where('CerPosCod', $cedula)->get();
+        $certificados = SHMCER::where('CerPosCod', $cedula)->where('CerEst', '!=', '7')->get();
+        //dd($certificados);
+        $certificadosconyuge = SHMCER::where('CerCoCI', $cedula)->where('CerEst', '!=', '7')->get();
         $cartera = PRMCLI::where('PerCod', $cedula)
             ->where('PylCod', '!=', 'P.F.')
             ->get();
