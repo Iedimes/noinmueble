@@ -62,19 +62,51 @@ class BeneficiarioController extends Controller
             ->header('Expires', '0');
         }
 
-        $persona = Bamper::where('PerCod', $cedula)->select('PerNom', 'PerCod')->first();
+        $persona = $this->obtenerPersonaLocal($cedula);
 
-        //$certificados = SHMCER::where('CerPosCod', $cedula)->get();
-        $certificados = SHMCER::where('CerPosCod', $cedula)->where('CerEst', '!=', '7')->get();
-        //dd($certificados);
-        $certificadosconyuge = SHMCER::where('CerCoCI', $cedula)->where('CerEst', '!=', '7')->get();
-        $cartera = PRMCLI::where('PerCod', $cedula)
-            ->where('PylCod', '!=', 'P.F.')
-            ->get();
-        $solicitantetitular = IVMSOL::where('SolPerCod', $cedula)->where('SolEtapa', 'B')->first();
-        $solicitanteconyuge = IVMSOL::where('SolPerCge', $cedula)->where('SolEtapa', 'B')->first();
-        $cepratitular = IVMSAS::where('SASCI', $cedula)->first();
-        $cepraconyuge = IVMSAS::where('CICONY', $cedula)->first();
+        try {
+            $certificados = SHMCER::where('CerPosCod', $cedula)->where('CerEst', '!=', '7')->get();
+        } catch (\Throwable $e) {
+            $certificados = collect();
+        }
+
+        try {
+            $certificadosconyuge = SHMCER::where('CerCoCI', $cedula)->where('CerEst', '!=', '7')->get();
+        } catch (\Throwable $e) {
+            $certificadosconyuge = collect();
+        }
+
+        try {
+            $cartera = PRMCLI::where('PerCod', $cedula)
+                ->where('PylCod', '!=', 'P.F.')
+                ->get();
+        } catch (\Throwable $e) {
+            $cartera = collect();
+        }
+
+        try {
+            $solicitantetitular = IVMSOL::where('SolPerCod', $cedula)->where('SolEtapa', 'B')->first();
+        } catch (\Throwable $e) {
+            $solicitantetitular = null;
+        }
+
+        try {
+            $solicitanteconyuge = IVMSOL::where('SolPerCge', $cedula)->where('SolEtapa', 'B')->first();
+        } catch (\Throwable $e) {
+            $solicitanteconyuge = null;
+        }
+
+        try {
+            $cepratitular = IVMSAS::where('SASCI', $cedula)->first();
+        } catch (\Throwable $e) {
+            $cepratitular = null;
+        }
+
+        try {
+            $cepraconyuge = IVMSAS::where('CICONY', $cedula)->first();
+        } catch (\Throwable $e) {
+            $cepraconyuge = null;
+        }
 
         $response = [
             'cedula' => $cedula,
@@ -99,84 +131,13 @@ class BeneficiarioController extends Controller
                 ->header('Expires', '0');
         }
 
-        // Si hay persona, consultamos la API
-        $headers = ['Content-Type' => 'application/json', 'Accept' => 'application/json'];
-        $GetOrder = ['username' => 'muvhConsulta', 'password' => '*Sipp*2025**'];
-        $client = new Client();
-        $cacheKey = 'persona_' . md5($cedula);
-
-        try {
-            $res = $client->post('https://sii.paraguay.gov.py/security', [
-                'headers' => $headers,
-                'json' => $GetOrder,
-                'decode_content' => false
-            ]);
-
-            $contents = $res->getBody()->getContents();
-            $book = json_decode($contents);
-
-            if ($book->success == true) {
-                $cedulaResponse = $client->get(
-                    'https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula,
-                    [
-                        'headers' => [
-                            'Authorization' => 'Bearer ' . $book->token,
-                            'Accept' => 'application/json',
-                            'Cache-Control' => 'no-cache, no-store, must-revalidate',
-                            'Pragma' => 'no-cache',
-                            'Expires' => '0',
-                            'Connection' => 'close',
-                        ],
-                        'query' => ['_t' => uniqid()],
-                        'http_errors' => false,
-                        'decode_content' => false,
-                    ]
-                );
-
-                $datos = $cedulaResponse->getBody()->getContents();
-                $datospersona = json_decode($datos);
-
-                if (isset($datospersona->obtenerPersonaPorNroCedulaResponse->return->error)) {
-                    return response()->json([
-                        'error' => $datospersona->obtenerPersonaPorNroCedulaResponse->return->error
-                    ])->header('Cache-Control', 'no-cache, no-store, must-revalidate')
-                    ->header('Pragma', 'no-cache')
-                    ->header('Expires', '0');
-                    } else {
-                    $nombre = $datospersona->obtenerPersonaPorNroCedulaResponse->return->nombres ?? '';
-                    $apellido = $datospersona->obtenerPersonaPorNroCedulaResponse->return->apellido ?? '';
-
-                    // Normalizar caracteres
-                    $nombre = mb_convert_encoding($nombre, 'UTF-8', 'auto');
-                    $apellido = mb_convert_encoding($apellido, 'UTF-8', 'auto');
-                    $nombre = preg_replace('/[^\P{C}]+/u', '', $nombre);
-                    $apellido = preg_replace('/[^\P{C}]+/u', '', $apellido);
-
-                    // Guardar datos en cache
-                    Cache::put($cacheKey, [
-                        'nombres' => $nombre,
-                        'apellido' => $apellido,
-                        'cedula' => $cedula
-                    ], now()->addMinutes(10));
-
-                    $response['titular'] = trim($nombre . ' ' . $apellido);
-
-                    return response()->json($response)
-                        ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
-                        ->header('Pragma', 'no-cache')
-                        ->header('Expires', '0');
-                }
-            }
-           } catch (\Exception $e) {
-                // Fallback al cache si la API falla
-                $datosCache = Cache::get($cacheKey);
-                if ($datosCache) {
-                    $response['titular'] = $datosCache['nombres'] . ' ' . $datosCache['apellido'];
-                    return response()->json($response)
-                        ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
-                        ->header('Pragma', 'no-cache')
-                        ->header('Expires', '0');
-                }
+        $datosTitular = $this->obtenerDatosTitular($cedula);
+        if ($datosTitular) {
+            $response['titular'] = $this->armarNombreTitular($datosTitular);
+            return response()->json($response)
+                ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                ->header('Pragma', 'no-cache')
+                ->header('Expires', '0');
         }
 
         // Si no se pudo obtener el nombre ni de API ni de cache
@@ -205,80 +166,19 @@ class BeneficiarioController extends Controller
         $impresion = Impresion::where('ci', $cedula)->latest()->first();
         if(!empty($impresion)){
 
-            $headers = [
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json'
-            ];
+            $datosTitular = $this->obtenerDatosTitular($cedula);
 
-            $GetOrder = [
-                'username' => 'muvhConsulta',
-                'password' => '*Sipp*2025**'
-            ];
+            if ($datosTitular) {
+                $nombre = $datosTitular['nombres'];
+                $apellido = $datosTitular['apellido'];
 
-            $client = new Client();
-            $res = $client->post('https://sii.paraguay.gov.py/security', [
-                'headers' => $headers,
-                'json' => $GetOrder,
-                'decode_content' => false
-            ]);
+                $response = [
+                    'cedula' => $cedula,
+                    'titular' => $this->armarNombreTitular($datosTitular),
+                    'mensaje' => '',
+                ];
 
-            $contents = $res->getBody()->getContents();
-            $book = json_decode($contents);
-
-            if ($book->success == true) {
-                $headerscedula = [
-                'Authorization' => 'Bearer ' . $book->token,
-                'Accept' => 'application/json',
-                'Cache-Control' => 'no-cache, no-store, must-revalidate',
-                'Pragma' => 'no-cache',
-                'Expires' => '0',
-                'Connection' => 'close',
-            ];
-
-
-               $cedulaResponse = $client->get(
-                    'https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula,
-                    [
-                        'headers' => [
-                            'Authorization' => 'Bearer ' . $book->token,
-                            'Accept'        => 'application/json',
-                            'Cache-Control' => 'no-cache, no-store, must-revalidate',
-                            'Pragma'        => 'no-cache',
-                            'Expires'       => '0',
-                            'Connection'    => 'close',
-                        ],
-                        'query' => [
-                            '_t' => uniqid(), // 🔑 cambia cada request
-                        ],
-                        'http_errors'     => false,
-                        'decode_content'  => false,
-                    ]
-                );
-
-                $datos = $cedulaResponse->getBody()->getContents();
-                $datospersona = json_decode($datos);
-
-                if (isset($datospersona->obtenerPersonaPorNroCedulaResponse->return->error)) {
-                    return redirect()->back()->with('status', $datospersona->obtenerPersonaPorNroCedulaResponse->return->error);
-                } else {
-                    $nombre = $datospersona->obtenerPersonaPorNroCedulaResponse->return->nombres;
-                    $apellido = $datospersona->obtenerPersonaPorNroCedulaResponse->return->apellido;
-                    $cedulaApi = $datospersona->obtenerPersonaPorNroCedulaResponse->return->cedula;                     $sexo = $datospersona->obtenerPersonaPorNroCedulaResponse->return->sexo;
-                    $fecha = date('Y-m-d H:i:s.v', strtotime($datospersona->obtenerPersonaPorNroCedulaResponse->return->fechNacim));
-                    $nac = $datospersona->obtenerPersonaPorNroCedulaResponse->return->nacionalidadBean;
-                    $est = $datospersona->obtenerPersonaPorNroCedulaResponse->return->estadoCivil;
-                    $nroexp = $cedula;
-
-                    $response = [
-                        'cedula' => $cedula,
-                        'titular' => $nombre . ' ' . $apellido,
-                        'mensaje' => '',
-                    ];
-
-                    return view('verification', compact('response', 'impresion'));
-
-
-                }
+                return view('verification', compact('response', 'impresion'));
             }
 
         }else{
@@ -296,21 +196,17 @@ class BeneficiarioController extends Controller
     {
         try {
             $cedula = $PerCod;
-            $cacheKey = 'persona_' . md5($cedula);
+            $datosTitular = $this->obtenerDatosTitular($cedula);
 
-            // Intentar obtener datos del cache
-            $datosCache = Cache::get($cacheKey);
-
-            if ($datosCache) {
-                // Usar datos del cache
-                $bamperApi = (object)[
-                    'PerNom' => $datosCache['nombres'],
-                    'PerApePri' => $datosCache['apellido'],
-                    'PerCod' => $cedula,
-                ];
-            } else {
-                return "No hay datos en caché para esta cédula.";
+            if (!$datosTitular) {
+                return response('No se pudieron obtener los datos de la API de identificaciones para esta cédula.', 404);
             }
+
+            $bamperApi = (object)[
+                'PerNom' => $datosTitular['nombres'],
+                'PerApePri' => $datosTitular['apellido'] ?? '',
+                'PerCod' => $cedula,
+            ];
 
             // Registrar impresión
             $impresion = new Impresion;
@@ -333,6 +229,165 @@ class BeneficiarioController extends Controller
 
         } catch (\Exception $e) {
             abort(500, 'Ocurrió un error inesperado: ' . $e->getMessage());
+        }
+    }
+
+    private function obtenerDatosTitular($cedula)
+    {
+        $cacheKey = 'persona_' . md5($cedula);
+
+        if (Cache::has($cacheKey)) {
+            $datosCache = Cache::get($cacheKey);
+            if ($datosCache && (!empty($datosCache['nombres']) || !empty($datosCache['apellido']))) {
+                return $this->normalizarDatosTitular($datosCache, $cedula);
+            }
+        }
+
+        $datos = null;
+        for ($attempt = 1; $attempt <= 2; $attempt++) {
+            $datos = $this->buscarPersonaEnApiIdentificaciones($cedula);
+            if ($datos) {
+                break;
+            }
+
+            if ($attempt < 2) {
+                usleep(250000);
+            }
+        }
+
+        if (!$datos) {
+            $persona = $this->obtenerPersonaLocal($cedula);
+            if ($persona) {
+                $datos = [
+                    'nombres' => $this->normalizarTexto($persona->PerNom ?? ''),
+                    'apellido' => $this->normalizarTexto($persona->PerApePri ?? ''),
+                    'cedula' => $cedula,
+                ];
+            }
+        }
+
+        if ($datos) {
+            Cache::put($cacheKey, $this->normalizarDatosTitular($datos, $cedula), now()->addMinutes(60));
+        }
+
+        return $datos;
+    }
+
+    private function normalizarDatosTitular($datos, $cedula)
+    {
+        return [
+            'nombres' => $this->normalizarTexto($datos['nombres'] ?? ''),
+            'apellido' => $this->normalizarTexto($datos['apellido'] ?? ''),
+            'cedula' => $cedula,
+        ];
+    }
+
+    private function armarNombreTitular($datos)
+    {
+        return trim(($datos['nombres'] ?? '') . ' ' . ($datos['apellido'] ?? ''));
+    }
+
+    private function normalizarTexto($texto)
+    {
+        if (!is_string($texto)) {
+            return '';
+        }
+
+        $texto = mb_convert_encoding($texto, 'UTF-8', 'auto');
+        $texto = preg_replace('/[^\P{C}]+/u', '', $texto);
+
+        return trim($texto);
+    }
+
+    private function obtenerPersonaLocal($cedula)
+    {
+        try {
+            return Bamper::where('PerCod', $cedula)
+                ->select('PerNom', 'PerCod')
+                ->first();
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private function buscarPersonaEnApiIdentificaciones($cedula)
+    {
+        $headers = ['Content-Type' => 'application/json', 'Accept' => 'application/json'];
+        $credentials = ['username' => 'muvhConsulta', 'password' => '*Sipp*2025**'];
+        $client = new Client();
+
+        try {
+            $res = $client->post('https://sii.paraguay.gov.py/security', [
+                'headers' => $headers,
+                'json' => $credentials,
+                'decode_content' => false,
+                'http_errors' => false,
+                'verify' => false,
+                'timeout' => 10,
+            ]);
+
+            if ($res->getStatusCode() !== 200) {
+                return null;
+            }
+
+            $content = $res->getBody()->getContents();
+            $book = json_decode($content);
+
+            if (empty($book->success) || empty($book->token)) {
+                return null;
+            }
+
+            $cedulaResponse = $client->get(
+                'https://sii.paraguay.gov.py/frontend-identificaciones/api/persona/obtenerPersonaPorCedula/' . $cedula,
+                [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $book->token,
+                        'Accept' => 'application/json',
+                        'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                        'Pragma' => 'no-cache',
+                        'Expires' => '0',
+                        'Connection' => 'close',
+                    ],
+                    'query' => ['_t' => uniqid()],
+                    'http_errors' => false,
+                    'decode_content' => false,
+                    'verify' => false,
+                    'timeout' => 10,
+                ]
+            );
+
+            if ($cedulaResponse->getStatusCode() !== 200) {
+                return null;
+            }
+
+            $datos = $cedulaResponse->getBody()->getContents();
+            $datospersona = json_decode($datos);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return null;
+            }
+
+            $returnData = $datospersona->obtenerPersonaPorNroCedulaResponse->return ?? null;
+            if (!$returnData || !empty($returnData->error)) {
+                return null;
+            }
+
+            $nombre = $this->normalizarTexto($returnData->nombres ?? '');
+            $apellido = $this->normalizarTexto($returnData->apellido ?? '');
+
+            if ($nombre === '' && $apellido === '') {
+                return null;
+            }
+
+            return [
+                'nombres' => $nombre,
+                'apellido' => $apellido,
+                'cedula' => $cedula,
+            ];
+        } catch (RequestException $e) {
+            return null;
+        } catch (\Exception $e) {
+            return null;
         }
     }
 
