@@ -63,21 +63,22 @@ class BeneficiarioController extends Controller
         }
 
         $persona = $this->obtenerPersonaLocal($cedula);
+        $cedulasFamilia = $this->obtenerCedulasFamilia($cedula);
 
         try {
-            $certificados = SHMCER::where('CerPosCod', $cedula)->where('CerEst', '!=', '7')->get();
+            $certificados = SHMCER::whereIn('CerPosCod', $cedulasFamilia)->where('CerEst', '!=', '7')->get();
         } catch (\Throwable $e) {
             $certificados = collect();
         }
 
         try {
-            $certificadosconyuge = SHMCER::where('CerCoCI', $cedula)->where('CerEst', '!=', '7')->get();
+            $certificadosconyuge = SHMCER::whereIn('CerCoCI', $cedulasFamilia)->where('CerEst', '!=', '7')->get();
         } catch (\Throwable $e) {
             $certificadosconyuge = collect();
         }
 
         try {
-            $cartera = PRMCLI::where('PerCod', $cedula)
+            $cartera = PRMCLI::whereIn('PerCod', $cedulasFamilia)
                 ->where('PylCod', '!=', 'P.F.')
                 ->get();
         } catch (\Throwable $e) {
@@ -85,28 +86,37 @@ class BeneficiarioController extends Controller
         }
 
         try {
-            $solicitantetitular = IVMSOL::where('SolPerCod', $cedula)->where('SolEtapa', 'B')->first();
+            $solicitantetitular = IVMSOL::whereIn('SolPerCod', $cedulasFamilia)->whereIn('SolEtapa', ['B', 'S'])->first();
         } catch (\Throwable $e) {
             $solicitantetitular = null;
         }
 
         try {
-            $solicitanteconyuge = IVMSOL::where('SolPerCge', $cedula)->where('SolEtapa', 'B')->first();
+            $solicitanteconyuge = IVMSOL::whereIn('SolPerCge', $cedulasFamilia)->whereIn('SolEtapa', ['B', 'S'])->first();
         } catch (\Throwable $e) {
             $solicitanteconyuge = null;
         }
 
         try {
-            $cepratitular = IVMSAS::where('SASCI', $cedula)->first();
+            $cepratitular = IVMSAS::whereIn('SASCI', $cedulasFamilia)->first();
         } catch (\Throwable $e) {
             $cepratitular = null;
         }
 
         try {
-            $cepraconyuge = IVMSAS::where('CICONY', $cedula)->first();
+            $cepraconyuge = IVMSAS::whereIn('CICONY', $cedulasFamilia)->first();
         } catch (\Throwable $e) {
             $cepraconyuge = null;
         }
+
+        $cedulasAfectadas = [
+            '2508554', '2001270', '4135149', '1602089', '3213622', '3628661', '3613336', '4588784', '6301183', '2980252',
+            '3560991', '5498464', '1962553', '4818890', '5363337', '5684474', '6158007', '3790675', '5615685', '5776947',
+            '5137975', '4688661', '4668661', '5959002', '1439092', '4294621', '1478762', '4700401', '6301040', '5730748',
+            '5844678', '4583319', '4983734', '6199401', '5101904', '5004305', '4261449', '2081933', '3552606', '4994592',
+            '6091993', '4876998', '6287864', '4047744', '5802656', '4354507', '7446306', '2633800', '6301031', '5395247',
+            '6067369', '4048247', '7113995', '5861908', '5212393', '2081586', '6593328', '1776573'
+        ];
 
         $response = [
             'cedula' => $cedula,
@@ -116,6 +126,7 @@ class BeneficiarioController extends Controller
 
         // Verificación de beneficios
         if (
+            in_array(trim($cedula), $cedulasAfectadas) ||
             $certificados->isNotEmpty() ||
             $certificadosconyuge->isNotEmpty() ||
             $cartera->isNotEmpty() ||
@@ -161,25 +172,51 @@ class BeneficiarioController extends Controller
 
     public function verificacion($cedula)
     {
-
-
+        $cedula = trim($cedula);
         $impresion = Impresion::where('ci', $cedula)->latest()->first();
+        
+        if (empty($impresion)) {
+            $impresion = Impresion::whereRaw('TRIM(ci) = ?', [$cedula])->latest()->first();
+        }
+
         if(!empty($impresion)){
+
+            $cedulasAfectadas = [
+                '2508554', '2001270', '4135149', '1602089', '3213622', '3628661', '3613336', '4588784', '6301183', '2980252',
+                '3560991', '5498464', '1962553', '4818890', '5363337', '5684474', '6158007', '3790675', '5615685', '5776947',
+                '5137975', '4688661', '4668661', '5959002', '1439092', '4294621', '1478762', '4700401', '6301040', '5730748',
+                '5844678', '4583319', '4983734', '6199401', '5101904', '5004305', '4261449', '2081933', '3552606', '4994592',
+                '6091993', '4876998', '6287864', '4047744', '5802656', '4354507', '7446306', '2633800', '6301031', '5395247',
+                '6067369', '4048247', '7113995', '5861908', '5212393', '2081586', '6593328', '1776573'
+            ];
 
             $datosTitular = $this->obtenerDatosTitular($cedula);
 
-            if ($datosTitular) {
-                $nombre = $datosTitular['nombres'];
-                $apellido = $datosTitular['apellido'];
-
+            if (in_array($cedula, $cedulasAfectadas)) {
                 $response = [
                     'cedula' => $cedula,
-                    'titular' => $this->armarNombreTitular($datosTitular),
-                    'mensaje' => '',
+                    'titular' => $datosTitular ? $this->armarNombreTitular($datosTitular) : 'TITULAR CONSULTADO',
+                    'estado' => 'requiere_reemision',
+                    'mensaje' => 'El presente documento requiere una nueva emisión debido a un proceso de actualización y sincronización de datos institucionales. El documento físico impreso no posee validez para trámites actuales. Se solicita al titular gestionar la re-emisión de la constancia actualizada a través de los canales correspondientes.',
                 ];
 
                 return view('verification', compact('response', 'impresion'));
             }
+
+            $titularNombre = $datosTitular ? $this->armarNombreTitular($datosTitular) : '';
+            if (empty($titularNombre)) {
+                $personaLocal = $this->obtenerPersonaLocal($cedula);
+                $titularNombre = $personaLocal ? trim($personaLocal->PerNom) : 'TITULAR REGISTRADO';
+            }
+
+            $response = [
+                'cedula' => $cedula,
+                'titular' => $titularNombre,
+                'estado' => 'valido',
+                'mensaje' => '',
+            ];
+
+            return view('verification', compact('response', 'impresion'));
 
         }else{
 
@@ -196,6 +233,24 @@ class BeneficiarioController extends Controller
     {
         try {
             $cedula = $PerCod;
+
+            $cedulasAfectadas = [
+                '2508554', '2001270', '4135149', '1602089', '3213622', '3628661', '3613336', '4588784', '6301183', '2980252',
+                '3560991', '5498464', '1962553', '4818890', '5363337', '5684474', '6158007', '3790675', '5615685', '5776947',
+                '5137975', '4688661', '4668661', '5959002', '1439092', '4294621', '1478762', '4700401', '6301040', '5730748',
+                '5844678', '4583319', '4983734', '6199401', '5101904', '5004305', '4261449', '2081933', '3552606', '4994592',
+                '6091993', '4876998', '6287864', '4047744', '5802656', '4354507', '7446306', '2633800', '6301031', '5395247',
+                '6067369', '4048247', '7113995', '5861908', '5212393', '2081586', '6593328', '1776573'
+            ];
+
+            $cedulasFamilia = $this->obtenerCedulasFamilia($cedula);
+            $solicitanteconyuge = IVMSOL::whereIn('SolPerCge', $cedulasFamilia)->whereIn('SolEtapa', ['B', 'S'])->exists();
+            $solicitantetitular = IVMSOL::whereIn('SolPerCod', $cedulasFamilia)->whereIn('SolEtapa', ['B', 'S'])->exists();
+
+            if (in_array(trim($cedula), $cedulasAfectadas) || $solicitanteconyuge || $solicitantetitular) {
+                return response('UD. CUENTA CON BENEFICIO EN EL MINISTERIO DE URBANISMO, VIVIENDA Y HABITAT. NO ES POSIBLE IMPRIMIR LA CONSTANCIA.', 403);
+            }
+
             $datosTitular = $this->obtenerDatosTitular($cedula);
 
             if (!$datosTitular) {
@@ -389,6 +444,36 @@ class BeneficiarioController extends Controller
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    private function obtenerCedulasFamilia($cedula)
+    {
+        $cedulas = [trim($cedula)];
+
+        try {
+            $solTitulares = IVMSOL::where('SolPerCge', $cedula)->pluck('SolPerCod')->toArray();
+            $solConyuges = IVMSOL::where('SolPerCod', $cedula)->pluck('SolPerCge')->toArray();
+            $cedulas = array_merge($cedulas, $solTitulares, $solConyuges);
+        } catch (\Throwable $e) {}
+
+        try {
+            $cerTitulares = SHMCER::where('CerCoCI', $cedula)->pluck('CerPosCod')->toArray();
+            $cerConyuges = SHMCER::where('CerPosCod', $cedula)->pluck('CerCoCI')->toArray();
+            $cedulas = array_merge($cedulas, $cerTitulares, $cerConyuges);
+        } catch (\Throwable $e) {}
+
+        try {
+            $sasTitulares = IVMSAS::where('CICONY', $cedula)->pluck('SASCI')->toArray();
+            $sasConyuges = IVMSAS::where('SASCI', $cedula)->pluck('CICONY')->toArray();
+            $cedulas = array_merge($cedulas, $sasTitulares, $sasConyuges);
+        } catch (\Throwable $e) {}
+
+        $cedulasLimpias = array_map('trim', $cedulas);
+        $cedulasLimpias = array_filter($cedulasLimpias, function($val) {
+            return !empty($val);
+        });
+
+        return array_values(array_unique($cedulasLimpias));
     }
 
 

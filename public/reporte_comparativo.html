@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe Comparativo de Impresiones vs IVMSOL</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --accent-primary: #6366f1;
+            --accent-secondary: #06b6d4;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            --accent-success: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(30, 41, 59, 0.7);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            padding: 2rem;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.12) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+        }
+
+        .header-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.85rem;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 9999px;
+            color: #a5b4fc;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #ffffff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        .grid-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .card-stat {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .card-stat:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-main);
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+        }
+
+        .stat-badge {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+
+        .badge-warning { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .badge-info { background: rgba(6, 182, 212, 0.2); color: #38bdf8; }
+        .badge-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        .explanation-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .explanation-panel h2 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .steps-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin-top: 1.25rem;
+        }
+
+        .step-item {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .step-num {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            background: var(--accent-primary);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .step-title {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 0.4rem;
+            color: var(--text-main);
+        }
+
+        .step-desc {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .code-snippet {
+            background: #090d16;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #38bdf8;
+            margin-top: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .controls-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: white;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 16px;
+            height: 16px;
+        }
+
+        .table-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.9);
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 1rem 1.25rem;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        tr:hover td {
+            background: var(--bg-card-hover);
+        }
+
+        .ci-badge {
+            font-family: monospace;
+            font-weight: 700;
+            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            color: #f1f5f9;
+        }
+
+        .tag-etapa {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .etapa-S { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .etapa-B { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+
+        .imp-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 26px;
+            height: 26px;
+            padding: 0 0.5rem;
+            background: rgba(99, 102, 241, 0.2);
+            color: #c7d2fe;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .cause-box {
+            font-size: 0.825rem;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-tag">
+                <span>🔍 Auditoría de Verificación de Beneficiarios</span>
+            </div>
+            <h1>Control Comparativo: Impresiones vs IVMSOL</h1>
+            <p class="subtitle">Análisis técnico de cómo se determinó el listado de las 58 cédulas de cónyuges que registraron impresión de constancias.</p>
+        </header>
+
+        <div class="grid-stats">
+            <div class="card-stat">
+                <div class="stat-label">Total Impresiones Auditadas</div>
+                <div class="stat-value">
+                    4,627
+                    <span class="stat-badge badge-info">100% BD Local</span>
+                </div>
+            </div>
+            <div class="card-stat">
+                <div class="stat-label">Cónyuges en IVMSOL (Únicos)</div>
+                <div class="stat-value">
+                    58
+                    <span class="stat-badge badge-danger">Cuestionados</span>
+                </div>
+            </div>
+            <div class="card-stat">
+                <div class="stat-label">En Etapa 'S' (Solicitud)</div>
+                <div class="stat-value">
+                    55
+                    <span class="stat-badge badge-warning">Ignorados por filtro 'B'</span>
+                </div>
+            </div>
+            <div class="card-stat">
+                <div class="stat-label">En Etapa 'B' (Beneficiario)</div>
+                <div class="stat-value">
+                    3
+                    <span class="stat-badge badge-warning">Con Filtro Activo</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="explanation-panel">
+            <h2>💡 Explicación Paso a Paso del Análisis Comparativo</h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">A continuación se detalla la metodología utilizada para cruzar la información entre la tabla local <code>impresions</code> y la tabla de solicitudes <code>IVMSOL</code>:</p>
+            
+            <div class="steps-list">
+                <div class="step-item">
+                    <div class="step-num">1</div>
+                    <div class="step-title">Extracción de Impresiones</div>
+                    <div class="step-desc">Se consultaron todos los <strong>4.627 registros</strong> de la tabla <code>impresions</code>. Cada registro representa una emisión exitosa de constancia generada con su respectiva C.I. y fecha.</div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-num">2</div>
+                    <div class="step-title">Cruce por SolPerCge</div>
+                    <div class="step-desc">Cada C.I. impresa fue buscada en la columna <code>SolPerCge</code> de la tabla <code>IVMSOL</code>. Se identificaron <strong>98 registros de impresión</strong> correspondientes a personas declaradas como cónyuges.</div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-num">3</div>
+                    <div class="step-title">Agrupación por Persona Única</div>
+                    <div class="step-desc">Debido a que varias personas imprimieron su constancia múltiples veces (ej: C.I. 4983734 con 17 impresiones), al agrupar por cédula única de cónyuge se llega exactamente a <strong>58 personas distintas</strong>.</div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-num">4</div>
+                    <div class="step-title">Causa en el Código PHP</div>
+                    <div class="step-desc">
+                        El controlador <code>BeneficiarioController.php</code> ejecutaba la consulta:
+                        <div class="code-snippet">IVMSOL::where('SolPerCge', $cedula)->where('SolEtapa', 'B')->first()</div>
+                        Al estar 55 de los 58 cónyuges en <strong>SolEtapa = 'S'</strong>, la búsqueda retornaba <code>null</code> y permitía la impresión.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-bar">
+            <div style="font-weight: 700; font-size: 1.1rem;">
+                📋 Listado Completo de las 58 Cédulas de Cónyuges
+            </div>
+            <div class="search-box">
+                <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" id="searchInput" class="search-input" placeholder="Buscar por C.I. de cónyuge o titular...">
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>C.I. Impreso (Cónyuge)</th>
+                        <th>C.I. Titular en IVMSOL</th>
+                        <th>Etapa en IVMSOL</th>
+                        <th>Cant. Impresiones</th>
+                        <th>Última Fecha de Impresión</th>
+                        <th>Motivo de Permisión</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Filas dinámicas -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const datos = [
+            { ci: "2508554", titular: "1891916", etapa: "S", total: 2, fecha: "2026-09-21 09:13:32" },
+            { ci: "2001270", titular: "1980543", etapa: "S", total: 1, fecha: "2026-09-07 12:35:53" },
+            { ci: "4135149", titular: "2908650", etapa: "S", total: 2, fecha: "2026-08-18 08:36:58" },
+            { ci: "1602089", titular: "2550312", etapa: "S", total: 1, fecha: "2026-08-18 08:34:27" },
+            { ci: "3213622", titular: "5015025", etapa: "S", total: 1, fecha: "2026-08-18 08:07:02" },
+            { ci: "3628661", titular: "5454394", etapa: "S", total: 2, fecha: "2026-08-18 07:42:29" },
+            { ci: "3613336", titular: "4787711", etapa: "S", total: 1, fecha: "2026-07-23 14:07:43" },
+            { ci: "4588784", titular: "5015046", etapa: "S", total: 1, fecha: "2026-07-23 14:02:51" },
+            { ci: "6301183", titular: "4755832", etapa: "B", total: 2, fecha: "2026-07-02 08:53:07", motivo: "Impreso el 02/07/2026. Modificado/Pasado a Etapa B en IVMSOL el 03/07/2026 (SolFum)" },
+            { ci: "2980252", titular: "2161185", etapa: "B", total: 1, fecha: "2026-07-02 08:38:51", motivo: "Impreso el 02/07/2026. Modificado/Pasado a Etapa B en IVMSOL el 03/07/2026 (SolFum)" },
+            { ci: "3560991", titular: "4190108", etapa: "S", total: 2, fecha: "2026-06-24 12:43:06" },
+            { ci: "5498464", titular: "4388118", etapa: "S", total: 2, fecha: "2026-06-15 13:18:34" },
+            { ci: "1962553", titular: "1425205", etapa: "S", total: 1, fecha: "2026-05-18 07:38:34" },
+            { ci: "4818890", titular: "3742848", etapa: "S", total: 1, fecha: "2026-04-20 10:46:43" },
+            { ci: "5363337", titular: "4711073", etapa: "S", total: 5, fecha: "2026-04-17 08:02:19" },
+            { ci: "5684474", titular: "4956733", etapa: "S", total: 1, fecha: "2026-04-06 10:14:20" },
+            { ci: "6158007", titular: "6884786", etapa: "S", total: 1, fecha: "2026-04-06 09:49:55" },
+            { ci: "3790675", titular: "4983604", etapa: "S", total: 1, fecha: "2026-04-06 09:22:48" },
+            { ci: "5615685", titular: "7373121", etapa: "S", total: 2, fecha: "2026-04-06 09:09:59" },
+            { ci: "5776947", titular: "5611628", etapa: "S", total: 1, fecha: "2026-04-06 08:51:24" },
+            { ci: "5137975", titular: "1592993", etapa: "S", total: 1, fecha: "2026-04-06 08:49:16" },
+            { ci: "4688661", titular: "4387725", etapa: "S", total: 3, fecha: "2026-03-27 12:14:28" },
+            { ci: "4668661", titular: "4466035", etapa: "S", total: 1, fecha: "2026-03-27 07:56:14" },
+            { ci: "5959002", titular: "7393526", etapa: "S", total: 1, fecha: "2026-03-04 10:35:54" },
+            { ci: "1439092", titular: "1686778", etapa: "S", total: 1, fecha: "2026-02-09 14:26:28" },
+            { ci: "4294621", titular: "3887000", etapa: "S", total: 1, fecha: "2025-12-12 10:59:40" },
+            { ci: "1478762", titular: "2591009", etapa: "S", total: 1, fecha: "2025-12-04 12:05:46" },
+            { ci: "4700401", titular: "6300591", etapa: "S", total: 1, fecha: "2025-11-13 11:51:04" },
+            { ci: "6301040", titular: "4588554", etapa: "S", total: 1, fecha: "2025-11-13 11:15:34" },
+            { ci: "5730748", titular: "6833884", etapa: "S", total: 10, fecha: "2025-11-13 10:26:57" },
+            { ci: "5844678", titular: "6142498", etapa: "S", total: 1, fecha: "2025-11-13 10:01:43" },
+            { ci: "4583319", titular: "5338612", etapa: "S", total: 1, fecha: "2025-11-13 09:22:25" },
+            { ci: "4983734", titular: "5527333", etapa: "S", total: 17, fecha: "2025-11-13 09:07:13" },
+            { ci: "6199401", titular: "6300583", etapa: "S", total: 1, fecha: "2025-11-13 08:50:05" },
+            { ci: "5101904", titular: "5004305", etapa: "S", total: 1, fecha: "2025-11-12 14:36:37" },
+            { ci: "5004305", titular: "5101904", etapa: "S", total: 1, fecha: "2025-11-12 14:34:49" },
+            { ci: "4261449", titular: "6829515", etapa: "S", total: 1, fecha: "2025-11-12 14:20:38" },
+            { ci: "2081933", titular: "2647932", etapa: "S", total: 1, fecha: "2025-11-12 14:15:17" },
+            { ci: "3552606", titular: "4037910", etapa: "S", total: 1, fecha: "2025-11-12 14:14:02" },
+            { ci: "4994592", titular: "5175531", etapa: "S", total: 1, fecha: "2025-11-12 14:06:15" },
+            { ci: "6091993", titular: "4943351", etapa: "S", total: 1, fecha: "2025-11-12 14:02:17" },
+            { ci: "4876998", titular: "5570288", etapa: "S", total: 1, fecha: "2025-11-12 13:55:57" },
+            { ci: "6287864", titular: "3966570", etapa: "S", total: 1, fecha: "2025-11-12 13:32:16" },
+            { ci: "4047744", titular: "5215222", etapa: "S", total: 1, fecha: "2025-11-12 13:10:47" },
+            { ci: "5802656", titular: "5576118", etapa: "S", total: 2, fecha: "2025-11-12 13:03:05" },
+            { ci: "4354507", titular: "4803984", etapa: "S", total: 1, fecha: "2025-11-12 11:57:51" },
+            { ci: "7446306", titular: "5839526", etapa: "S", total: 1, fecha: "2025-11-12 11:51:38" },
+            { ci: "2633800", titular: "7449500", etapa: "S", total: 1, fecha: "2025-11-12 11:28:13" },
+            { ci: "6301031", titular: "5244382", etapa: "S", total: 1, fecha: "2025-11-12 11:11:32" },
+            { ci: "5395247", titular: "4960846", etapa: "S", total: 1, fecha: "2025-11-12 11:06:47" },
+            { ci: "6067369", titular: "4932316", etapa: "S", total: 2, fecha: "2025-11-12 10:26:49" },
+            { ci: "4048247", titular: "4682688", etapa: "S", total: 1, fecha: "2025-11-12 09:35:10" },
+            { ci: "7113995", titular: "6176229", etapa: "S", total: 1, fecha: "2025-11-12 09:27:40" },
+            { ci: "5861908", titular: "6661879", etapa: "S", total: 1, fecha: "2025-11-12 09:22:30" },
+            { ci: "5212393", titular: "6802181", etapa: "S", total: 1, fecha: "2025-11-12 09:19:06" },
+            { ci: "2081586", titular: "2390606", etapa: "S", total: 1, fecha: "2025-10-23 13:04:34" },
+            { ci: "6593328", titular: "1581558", etapa: "S", total: 1, fecha: "2025-09-25 09:37:23" },
+            { ci: "1776573", titular: "898081", etapa: "S", total: 1, fecha: "2025-09-25 06:51:34" }
+        ];
+
+        function renderTable(filterText = "") {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = "";
+            const filtered = datos.filter(item => 
+                item.ci.includes(filterText) || item.titular.includes(filterText)
+            );
+
+            filtered.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                const motivo = item.motivo 
+                    ? item.motivo 
+                    : (item.etapa === 'S' ? "Ignorada por filtro SolEtapa='B' en controlador" : "Registrada en Beneficiario (Etapa B)");
+
+                tr.innerHTML = `
+                    <td style="color: var(--text-muted);">${index + 1}</td>
+                    <td><span class="ci-badge">${item.ci}</span></td>
+                    <td><span class="ci-badge" style="color: #94a3b8;">${item.titular}</span></td>
+                    <td><span class="tag-etapa etapa-${item.etapa}">Etapa ${item.etapa}</span></td>
+                    <td><span class="imp-count">${item.total}</span></td>
+                    <td>${item.fecha}</td>
+                    <td class="cause-box">${motivo}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            renderTable(e.target.value.trim());
+        });
+
+        renderTable();
+    </script>
+</body>
+</html>
