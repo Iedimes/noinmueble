@@ -86,18 +86,6 @@ class BeneficiarioController extends Controller
         }
 
         try {
-            $solicitantetitular = IVMSOL::whereIn('SolPerCod', $cedulasFamilia)->whereIn('SolEtapa', ['B', 'S'])->first();
-        } catch (\Throwable $e) {
-            $solicitantetitular = null;
-        }
-
-        try {
-            $solicitanteconyuge = IVMSOL::whereIn('SolPerCge', $cedulasFamilia)->whereIn('SolEtapa', ['B', 'S'])->first();
-        } catch (\Throwable $e) {
-            $solicitanteconyuge = null;
-        }
-
-        try {
             $cepratitular = IVMSAS::whereIn('SASCI', $cedulasFamilia)->first();
         } catch (\Throwable $e) {
             $cepratitular = null;
@@ -124,14 +112,12 @@ class BeneficiarioController extends Controller
             'mensaje' => '',
         ];
 
-        // Verificación de beneficios
+        // Verificación de beneficios (titular y cónyuge)
         if (
-            in_array(trim($cedula), $cedulasAfectadas) ||
+            !empty(array_intersect($cedulasFamilia, $cedulasAfectadas)) ||
             $certificados->isNotEmpty() ||
             $certificadosconyuge->isNotEmpty() ||
             $cartera->isNotEmpty() ||
-            $solicitantetitular ||
-            $solicitanteconyuge ||
             $cepratitular ||
             $cepraconyuge
         ) {
@@ -244,10 +230,45 @@ class BeneficiarioController extends Controller
             ];
 
             $cedulasFamilia = $this->obtenerCedulasFamilia($cedula);
-            $solicitanteconyuge = IVMSOL::whereIn('SolPerCge', $cedulasFamilia)->whereIn('SolEtapa', ['B', 'S'])->exists();
-            $solicitantetitular = IVMSOL::whereIn('SolPerCod', $cedulasFamilia)->whereIn('SolEtapa', ['B', 'S'])->exists();
 
-            if (in_array(trim($cedula), $cedulasAfectadas) || $solicitanteconyuge || $solicitantetitular) {
+            try {
+                $certificados = SHMCER::whereIn('CerPosCod', $cedulasFamilia)->where('CerEst', '!=', '7')->exists();
+            } catch (\Throwable $e) {
+                $certificados = false;
+            }
+
+            try {
+                $certificadosconyuge = SHMCER::whereIn('CerCoCI', $cedulasFamilia)->where('CerEst', '!=', '7')->exists();
+            } catch (\Throwable $e) {
+                $certificadosconyuge = false;
+            }
+
+            try {
+                $cartera = PRMCLI::whereIn('PerCod', $cedulasFamilia)->where('PylCod', '!=', 'P.F.')->exists();
+            } catch (\Throwable $e) {
+                $cartera = false;
+            }
+
+            try {
+                $cepratitular = IVMSAS::whereIn('SASCI', $cedulasFamilia)->exists();
+            } catch (\Throwable $e) {
+                $cepratitular = false;
+            }
+
+            try {
+                $cepraconyuge = IVMSAS::whereIn('CICONY', $cedulasFamilia)->exists();
+            } catch (\Throwable $e) {
+                $cepraconyuge = false;
+            }
+
+            if (
+                !empty(array_intersect($cedulasFamilia, $cedulasAfectadas)) ||
+                $certificados ||
+                $certificadosconyuge ||
+                $cartera ||
+                $cepratitular ||
+                $cepraconyuge
+            ) {
                 return response('UD. CUENTA CON BENEFICIO EN EL MINISTERIO DE URBANISMO, VIVIENDA Y HABITAT. NO ES POSIBLE IMPRIMIR LA CONSTANCIA.', 403);
             }
 
