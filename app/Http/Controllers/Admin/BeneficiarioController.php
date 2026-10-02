@@ -112,6 +112,18 @@ class BeneficiarioController extends Controller
             'mensaje' => '',
         ];
 
+        try {
+            $solTipo20 = IVMSOL::where(function ($q) use ($cedulasFamilia) {
+                $q->whereIn('SolPerCod', $cedulasFamilia)
+                  ->orWhereIn('SolPerCge', $cedulasFamilia);
+            })
+            ->where('SolTipo', 20)
+            ->where('SolEtapa', 'B')
+            ->first();
+        } catch (\Throwable $e) {
+            $solTipo20 = null;
+        }
+
         // Verificación de beneficios (titular y cónyuge)
         if (
             !empty(array_intersect($cedulasFamilia, $cedulasAfectadas)) ||
@@ -119,7 +131,8 @@ class BeneficiarioController extends Controller
             $certificadosconyuge->isNotEmpty() ||
             $cartera->isNotEmpty() ||
             $cepratitular ||
-            $cepraconyuge
+            $cepraconyuge ||
+            $solTipo20
         ) {
             $response['mensaje'] = 'UD. CUENTA CON BENEFICIO EN EL MINISTERIO DE URBANISMO, VIVIENDA Y HABITAT. NO ES POSIBLE IMPRIMIR LA CONSTANCIA.';
             return response()->json($response)
@@ -261,13 +274,26 @@ class BeneficiarioController extends Controller
                 $cepraconyuge = false;
             }
 
+            try {
+                $solTipo20 = IVMSOL::where(function ($q) use ($cedulasFamilia) {
+                    $q->whereIn('SolPerCod', $cedulasFamilia)
+                      ->orWhereIn('SolPerCge', $cedulasFamilia);
+                })
+                ->where('SolTipo', 20)
+                ->where('SolEtapa', 'B')
+                ->exists();
+            } catch (\Throwable $e) {
+                $solTipo20 = false;
+            }
+
             if (
                 !empty(array_intersect($cedulasFamilia, $cedulasAfectadas)) ||
                 $certificados ||
                 $certificadosconyuge ||
                 $cartera ||
                 $cepratitular ||
-                $cepraconyuge
+                $cepraconyuge ||
+                $solTipo20
             ) {
                 return response('UD. CUENTA CON BENEFICIO EN EL MINISTERIO DE URBANISMO, VIVIENDA Y HABITAT. NO ES POSIBLE IMPRIMIR LA CONSTANCIA.', 403);
             }
